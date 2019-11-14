@@ -21,9 +21,9 @@ namespace FileService.Application.Services
         {
             this._configService = configService;
             var rateLimitingConfig = configService.GetJson<RateLimitingConfig>("RateLimiting");
-            this._createRate = new RequestsCounter(rateLimitingConfig.SavePerFileKey.Duration);
-            this._getPerIpRate = new RequestsCounter(rateLimitingConfig.GetPerIP.Duration);
-            this._getPerFileKeyRate = new RequestsCounter(rateLimitingConfig.GetPerFileKey.Duration);
+            this._createRate = new RequestsCounter(rateLimitingConfig.SavePerIP.DurationTime);
+            this._getPerIpRate = new RequestsCounter(rateLimitingConfig.GetPerIP.DurationTime);
+            this._getPerFileKeyRate = new RequestsCounter(rateLimitingConfig.GetPerFileKey.DurationTime);
 
             _clearTimer = new Timer((_) => OnClearTimerTick(), null, 10 * 1000, 10 * 1000);
         }
@@ -32,7 +32,7 @@ namespace FileService.Application.Services
         {
             var rateLimitingConfig = this._configService.GetJson<RateLimitingConfig>("RateLimiting");
 
-            if (this._createRate.Increase(ip) > rateLimitingConfig.SavePerFileKey.Limit)
+            if (this._createRate.Increase(ip) > rateLimitingConfig.SavePerIP.Limit)
             {
                 throw new RateLimitingException();
             }
@@ -64,13 +64,14 @@ namespace FileService.Application.Services
         {
             public RateLimitingConfigItem GetPerIP { get; set; }
             public RateLimitingConfigItem GetPerFileKey { get; set; }
-            public RateLimitingConfigItem SavePerFileKey { get; set; }
+            public RateLimitingConfigItem SavePerIP { get; set; }
         }
 
         class RateLimitingConfigItem
         {
-            public TimeSpan Duration { get; set; }
+            public string Duration { get; set; }
             public int Limit { get; set; }
+            public TimeSpan DurationTime { get { return new TimeSpan(0,Convert.ToInt32(Duration.Split(":")[0]),Convert.ToInt16(Duration.Split(":")[1]),Convert.ToInt32(Duration.Split(":")[2])); } }
         }
     }
 }

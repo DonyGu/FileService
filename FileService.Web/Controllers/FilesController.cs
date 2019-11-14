@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Policy;
-using System.Threading.Tasks;
-// using Comm100.Web.Controllers;
 using FileService.Application.Dto;
 using FileService.Application.Interfaces;
 using Comm100.Framework.Config;
@@ -82,6 +77,12 @@ namespace FileService.Web.Controllers
         {
             this._fileAppService.Delete(new FileDeleteDto());
             throw new NotImplementedException();
+        }
+
+        [HttpGet("version")]
+        public ActionResult Version()
+        {
+            return Ok("File Service 001");
         }
 
         private byte[] StreamToBytes(System.IO.Stream s)

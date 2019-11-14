@@ -22,7 +22,10 @@ namespace FileService.Infrastructure
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.ApplyConfiguration(new ConfigEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new FileContentEntityTypeConfigurations());
             modelBuilder.ApplyConfiguration(new FileEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new FileLimitEntityTypeConfigurations());
         }
     }
 }
