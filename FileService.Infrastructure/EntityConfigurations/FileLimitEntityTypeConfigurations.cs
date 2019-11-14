@@ -8,7 +8,5 @@ public class FileLimitEntityTypeConfigurations : IEntityTypeConfiguration<FileLi
     {
         builder.ToTable("t_fileService_fileLimit");
         builder.HasKey(a => a.AppId);
-
-        throw new System.NotImplementedException();
-    }
+}
 }

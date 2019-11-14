@@ -11,7 +11,6 @@ namespace FileService.Infrastructure.EntityConfigurations
         {
             builder.ToTable("t_fileService_fileContent");
             builder.HasKey(a => a.Checksum);
-            throw new NotImplementedException();
         }
     }
 }

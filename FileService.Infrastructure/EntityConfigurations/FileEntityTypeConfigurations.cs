@@ -10,8 +10,6 @@ namespace FileService.Infrastructure.EntityConfigurations
         {
             builder.ToTable("t_fileService_file");
             builder.HasKey(a => a.FileKey);
-
-            throw new System.NotImplementedException();
         }
     }
 }

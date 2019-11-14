@@ -14,7 +14,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileService.Web.Controllers
 {
-    [Route("v1/files/[controller]")]
+    [Route("[controller]")]
     [ApiController]
     public class FilesController : ControllerBase
     {

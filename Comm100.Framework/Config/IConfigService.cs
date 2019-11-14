@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System;
 
 namespace Comm100.Framework.Config
@@ -26,7 +27,14 @@ namespace Comm100.Framework.Config
 
         public static T GetJson<T>(this IConfigService config, string key)
         {
-            throw new NotImplementedException();
+            var value = config.Get(key);
+            return JsonConvert.DeserializeObject<T>(value);
+        }
+
+        public static byte[] GetFile(this IConfigService config, string key)
+        {
+            var value = config.Get(key);
+            return System.IO.File.ReadAllBytes(value);
         }
     }
 }
