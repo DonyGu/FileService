@@ -1,12 +1,11 @@
 using FileService.Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System.Data.Entity.ModelConfiguration;
 
 namespace FileService.Infrastructure.EntityConfigurations
 {
-    public class FileEntityTypeConfigurations : IEntityTypeConfiguration<File>
+    public class FileEntityTypeConfigurations : EntityTypeConfiguration<File>
     {
-        public void Configure(EntityTypeBuilder<File> builder)
+        public void Configure(EntityTypeConfiguration<File> builder)
         {
             
             builder.ToTable("t_fileService_file");

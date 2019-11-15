@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="Castle.Windsor" Version="5.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.0.0" />
+    <PackageReference Include="EntityFramework" Version="6.3.0" />
   </ItemGroup>
 
   <ItemGroup>
