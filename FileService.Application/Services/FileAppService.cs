@@ -32,17 +32,23 @@ namespace FileService.Application.Services
 
         public FileDto Upload(FileUploadDto dto)
         {
-            this._rateLimitingService.CheckUpload(dto.Auth.IP);
+            //this._rateLimitingService.CheckUpload(dto.Auth.IP);
 
-            var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
+            //var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
 
-            this._fileDomainService.Create(new FileCreateBo());
+            this._fileDomainService.Create(new FileCreateBo()
+            {
+                SiteId=0,
+                Name=dto.Name,
+                Content=dto.Content,
+                AppId="hosted"
+            });
             throw new NotImplementedException();
         }
 
         public FileDto Create(FileCreateDto dto)
         {
-            this._fileAuthService.VerifyComm100Platform(dto.Auth);
+            //this._fileAuthService.VerifyComm100Platform(dto.Auth);
 
             this._fileDomainService.Create(new File());
             throw new NotImplementedException();

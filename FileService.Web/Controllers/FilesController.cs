@@ -23,19 +23,19 @@ namespace FileService.Web.Controllers
         }
 
         [HttpPost("")]
-        public ActionResult<string> Upload(IFormFile file)
+        public ActionResult<string> Upload([FromForm]IFormFile file)
         {
             var dto = new FileUploadDto();
             dto.Name = file.Name;
             dto.Content = StreamToBytes(file.OpenReadStream());
-            dto.Auth = new AuthJwt
-            {
-                IP = this.HttpContext.Connection.RemoteIpAddress.ToString(),
-                Jwt = this.Request.Headers["Authorization"].ToArray()[0],
-            };
+            //dto.Auth = new AuthJwt
+            //{
+            //    IP = this.HttpContext.Connection.RemoteIpAddress.ToString(),
+            //    Jwt = this.Request.Headers["Authorization"].ToArray()[0],
+            //};
             this._fileAppService.Upload(dto);
 
-            throw new NotImplementedException();
+            return Ok();
         }
 
         [HttpPost("{fileKey}")]

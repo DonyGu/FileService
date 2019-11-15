@@ -4,7 +4,7 @@ namespace FileService.Domain.Bo
 {
     public class FileCreateBo
     {
-        public string SiteId { get; set; }
+        public int SiteId { get; set; }
         public string Name { get; set; }
         public byte[] Content { get; set; }
         public DateTime? ExpireTime { get; set; }

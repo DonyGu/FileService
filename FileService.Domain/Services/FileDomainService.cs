@@ -38,13 +38,13 @@ namespace FileService.Domain.Services
 
         public File Create(FileCreateBo bo)
         {
-            this._fileLimitDomainService.Check(new CheckFileLimitBo());
+            //this._fileLimitDomainService.Check(new CheckFileLimitBo());
 
             var fileKey = CreateFileKey(bo);
 
-            this._repository.Create(new File());
+            return this._repository.Create(new File());
 
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
         }
 
         public File Create(File bo)
@@ -84,7 +84,7 @@ namespace FileService.Domain.Services
 
         public void Delete(string fileKey)
         {
-            
+
             this._repository.Delete(this._repository.Get(fileKey));
             this._s3Repository.Delete(new S3SettingsBo(), fileKey);
             throw new NotImplementedException();
@@ -97,7 +97,15 @@ namespace FileService.Domain.Services
 
         private string CreateFileKey(FileCreateBo bo)
         {
-            throw new NotImplementedException();
+            var file = new File()
+            {
+                FileKey=Guid.NewGuid().ToString(),
+                SiteId=bo.SiteId,
+                Name=bo.Name,
+                CreationTime=DateTime.UtcNow,
+                //Content=bo.Content,
+            };
+            return _repository.Create(file).FileKey;
         }
     }
 }

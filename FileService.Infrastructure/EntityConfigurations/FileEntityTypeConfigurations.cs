@@ -8,6 +8,7 @@ namespace FileService.Infrastructure.EntityConfigurations
     {
         public void Configure(EntityTypeBuilder<File> builder)
         {
+            
             builder.ToTable("t_fileService_file");
             builder.HasKey(a => a.FileKey);
         }
