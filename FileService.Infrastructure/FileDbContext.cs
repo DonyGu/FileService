@@ -1,29 +1,31 @@
-using Comm100.Framework.Config;
 using FileService.Domain.Entities;
 using FileService.Infrastructure.EntityConfigurations;
-using System.Configuration;
-using System.Data.Entity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace FileService.Infrastructure
 {
     public class FileDbContext : DbContext
     {
-        public FileDbContext(string nameOrConnectionString) :base(nameOrConnectionString)
+        public string connectString { get; set; }
+        public FileDbContext(IConfiguration configuration)
         {
-            //Database.SetInitializer<FileDbContext>(null);
+            this.connectString = configuration.GetConnectionString("DefaultConnection");
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseSqlServer(connectString);
         }
 
         public virtual DbSet<File> Files { get; set; }
-        public virtual DbSet<FileContent> FileContent { get; set; }
-        public virtual DbSet<Config> Config { get; set; }
-        public virtual DbSet<FileLimit> FileLimit { get; set; }
 
-        protected override void OnModelCreating(DbModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.Configurations.Add(new ConfigEntityTypeConfigurations());
-            modelBuilder.Configurations.Add(new FileContentEntityTypeConfigurations());
-            modelBuilder.Configurations.Add(new FileEntityTypeConfigurations());
-            modelBuilder.Configurations.Add(new FileLimitEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new ConfigEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new FileContentEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new FileEntityTypeConfigurations());
+            modelBuilder.ApplyConfiguration(new FileLimitEntityTypeConfigurations());
         }
     }
 }

@@ -13,11 +13,7 @@ namespace FileService.Domain.Interfaces
         File Create(File file);
         File Get(string fileKey);
 
-        // for move files back from standby file service
-        IReadOnlyList<File> GetList(int count);
-
-        // for move files to S3
-        IReadOnlyList<FileContent> GetFileContentList(FileContentFilterSpecification spec);
+        IReadOnlyList<File> GetList(FileFilterSpecification spec);
 
         // move file to s3 and update db
         void MoveToRemote(string fileKey);

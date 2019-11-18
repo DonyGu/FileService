@@ -2,9 +2,9 @@
 using Castle.MicroKernel.Registration;
 using FileService.Domain.Interfaces;
 using FileService.Infrastructure.Repositories;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Data.Entity;
 using System.Text;
 
 namespace FileService.Infrastructure

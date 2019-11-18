@@ -62,15 +62,9 @@ namespace FileService.Domain.Services
             throw new NotImplementedException();
         }
 
-        public IReadOnlyList<File> GetList(int n)
+        public IReadOnlyList<File> GetList(FileFilterSpecification spec)
         {
-            return this._repository.ListAll().Take(n).ToList();
 
-            throw new NotImplementedException();
-        }
-
-        public IReadOnlyList<FileContent> GetFileContentList(FileContentFilterSpecification spec)
-        {
             throw new NotImplementedException();
         }
 
@@ -99,10 +93,10 @@ namespace FileService.Domain.Services
         {
             var file = new File()
             {
-                FileKey=Guid.NewGuid().ToString(),
-                SiteId=bo.SiteId,
-                Name=bo.Name,
-                CreationTime=DateTime.UtcNow,
+                FileKey = Guid.NewGuid().ToString(),
+                SiteId = bo.SiteId,
+                Content = new FileContent() { Name = bo.Name },
+                CreationTime = DateTime.UtcNow,
                 //Content=bo.Content,
             };
             return _repository.Create(file).FileKey;

@@ -32,7 +32,7 @@ namespace FileService.Domain.Services
         public void MoveToS3()
         {
             var n = this._configService.GetInt("DbToS3WorkerNum");
-            var files = this._fileDomainService.GetFileContentList(new FileContentFilterSpecification(n, StorageType.Db));
+            var files = this._fileDomainService.GetList(new FileFilterSpecification(n, StorageType.Db));
             var tasks = files.Select((f) =>
                 Task.Run(() =>
                 {

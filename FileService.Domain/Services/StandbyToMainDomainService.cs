@@ -30,7 +30,7 @@ namespace FileService.Domain.Services
         public void MoveToMain()
         {
             var n = _configService.GetInt("StandbyToMainWorkerNum");
-            var files = this._fileDomainService.GetList(n);
+            var files = this._fileDomainService.GetList(new FileFilterSpecification(n, null));
             var tasks = files.Select((f) =>
                 Task.Run(() =>
                 {

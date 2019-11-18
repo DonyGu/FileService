@@ -1,12 +1,13 @@
 using System;
-using System.Data.Entity.ModelConfiguration;
 using FileService.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace FileService.Infrastructure.EntityConfigurations
 {
-    public class FileContentEntityTypeConfigurations : EntityTypeConfiguration<FileContent>
+    public class FileContentEntityTypeConfigurations : IEntityTypeConfiguration<FileContent>
     {
-        public void Configure(EntityTypeConfiguration<FileContent> builder)
+        public void Configure(EntityTypeBuilder<FileContent> builder)
         {
             builder.ToTable("t_fileService_fileContent");
             builder.HasKey(a => a.Checksum);

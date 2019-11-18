@@ -7,7 +7,7 @@ namespace FileService.Domain.Specifications
     public class FileFilterSpecification : BaseSpecification<File>
     {
         public FileFilterSpecification(int count, StorageType? storageType)
-            : base(f => f.StorageType == storageType)
+            : base(f => f.Content.StorageType == storageType)
         {
             throw new NotImplementedException();
         }

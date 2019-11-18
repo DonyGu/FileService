@@ -1,11 +1,12 @@
 using FileService.Domain.Entities;
-using System.Data.Entity.ModelConfiguration;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
-public class FileLimitEntityTypeConfigurations : EntityTypeConfiguration<FileLimit>
+public class FileLimitEntityTypeConfigurations : IEntityTypeConfiguration<FileLimit>
 {
-    public void Configure(EntityTypeConfiguration<FileLimit> builder)
+    public void Configure(EntityTypeBuilder<FileLimit> builder)
     {
         builder.ToTable("t_fileService_fileLimit");
         builder.HasKey(a => a.AppId);
-    }
+}
 }
