@@ -55,7 +55,7 @@ namespace FileService.Web.Controllers
             // file not found
             try
             {
-                var file = this._fileAppService.Get(new FileGetDto());
+                var file = this._fileAppService.Get(fileKey);
             }
             catch(FileKeyNotFoundException)
             {

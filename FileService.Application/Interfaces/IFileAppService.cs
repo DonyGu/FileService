@@ -17,7 +17,7 @@ namespace FileService.Application.Interfaces
         FileDto Create(FileCreateDto dto);
 
         // browser download file
-        FileDto Get(FileGetDto dto);
+        FileDto Get(string fileKey);
 
         void Delete(FileDeleteDto dto);
     }

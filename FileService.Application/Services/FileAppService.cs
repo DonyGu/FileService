@@ -17,23 +17,18 @@ namespace FileService.Application.Services
         private readonly IFileDomainService _fileDomainService;
         private readonly IFileAuthService _fileAuthService;
         private readonly IConfigService _configService;
-        private readonly IFileRateLimitingService _rateLimitingService;
 
         public FileAppService(IFileDomainService fileDomainService,
             IFileAuthService authService,
-            IConfigService configService,
-            IFileRateLimitingService rateLimitingService)
+            IConfigService configService)
         {
             this._fileDomainService = fileDomainService;
             this._configService = configService;
             this._fileAuthService = authService;
-            this._rateLimitingService = rateLimitingService;
         }
 
         public FileDto Upload(FileUploadDto dto)
         {
-            //this._rateLimitingService.CheckUpload(dto.Auth.IP);
-
             //var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
 
             this._fileDomainService.Create(new FileCreateBo()
@@ -54,11 +49,9 @@ namespace FileService.Application.Services
             throw new NotImplementedException();
         }
 
-        public FileDto Get(FileGetDto dto)
+        public FileDto Get(string fileKey)
         {
-            this._rateLimitingService.CheckGet(dto.FileKey, dto.IP);
-
-            this._fileDomainService.Get(dto.FileKey);
+            this._fileDomainService.Get(fileKey);
             throw new NotImplementedException();
         }
 
