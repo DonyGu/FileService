@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 namespace FileService.Domain.Entities
 {
@@ -7,9 +8,9 @@ namespace FileService.Domain.Entities
         public byte[] Checksum { get; set; }
         public string Name { get; set; }
         public byte[] Content { get; set; }
-        public DateTime ExpireTime { get; set; }
         public string Link { get; set; }
         public StorageType StorageType { get; set; }
+        public virtual ICollection<File> File { get; set; }
     }
 
     public enum StorageType

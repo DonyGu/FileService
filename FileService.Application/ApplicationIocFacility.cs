@@ -24,8 +24,6 @@ namespace FileService.Application
                             .LifestyleScoped(),
                Component.For(typeof(IFileAuthService)).ImplementedBy(typeof(FileAuthService))
                             .LifestyleScoped(),
-               Component.For(typeof(IFileRateLimitingService)).ImplementedBy(typeof(FileRateLimitingService))
-                            .LifestyleScoped(),
                Component.For(typeof(IStandbyToMainService)).ImplementedBy(typeof(StandbyToMainService))
                             .LifestyleScoped()
                 );

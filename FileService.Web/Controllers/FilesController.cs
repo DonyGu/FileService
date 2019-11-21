@@ -6,6 +6,7 @@ using Comm100.Framework.Exceptions;
 using Comm100.Framework.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 
 namespace FileService.Web.Controllers
 {
@@ -26,16 +27,16 @@ namespace FileService.Web.Controllers
         public ActionResult<string> Upload([FromForm]IFormFile file)
         {
             var dto = new FileUploadDto();
-            dto.Name = file.Name;
+            dto.Name = file.FileName;
             dto.Content = StreamToBytes(file.OpenReadStream());
             //dto.Auth = new AuthJwt
             //{
             //    IP = this.HttpContext.Connection.RemoteIpAddress.ToString(),
             //    Jwt = this.Request.Headers["Authorization"].ToArray()[0],
             //};
-            this._fileAppService.Upload(dto);
+            var fileDTO = this._fileAppService.Upload(dto);
 
-            return Ok();
+            return Ok(fileDTO);
         }
 
         [HttpPost("{fileKey}")]
@@ -46,7 +47,7 @@ namespace FileService.Web.Controllers
         }
 
         [HttpGet("{fileKey}")]
-        public ActionResult Get(string fileKey)
+        public HttpResponseMessage Get(string fileKey)
         {
             // cases:
             // return file content
@@ -56,8 +57,19 @@ namespace FileService.Web.Controllers
             try
             {
                 var file = this._fileAppService.Get(fileKey);
+                var result = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                {
+                    Content = new ByteArrayContent(file.Content)
+                };
+                result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("Inline")
+                {
+                    FileName = file.Name
+                };
+                result.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("img/png");
+                result.Content.Headers.ContentDisposition.FileName = file.Name;
+                return result;
             }
-            catch(FileKeyNotFoundException)
+            catch (FileKeyNotFoundException)
             {
                 if (this._configService.GetBool("IsMainServer"))
                 {
@@ -68,8 +80,8 @@ namespace FileService.Web.Controllers
                     var url = this._configService.Get("MainServiceUrl");
                     // redirect to main file service
                 }
+                throw new NotImplementedException();
             }
-            throw new NotImplementedException();
         }
 
         [HttpDelete("{fileKey}")]
@@ -87,7 +99,7 @@ namespace FileService.Web.Controllers
 
         private byte[] StreamToBytes(System.IO.Stream s)
         {
-            using(var ms = new System.IO.MemoryStream())
+            using (var ms = new System.IO.MemoryStream())
             {
                 s.CopyTo(ms);
                 return ms.ToArray();

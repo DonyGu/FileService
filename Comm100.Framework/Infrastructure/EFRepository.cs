@@ -68,7 +68,7 @@ namespace Comm100.Framework.Infrastructure
 
         private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> spec)
         {
-            throw new NotImplementedException();
+            return SpecificationEvaluator<TEntity>.GetQuery(GetQueryable(), spec);
         }
     }
 }

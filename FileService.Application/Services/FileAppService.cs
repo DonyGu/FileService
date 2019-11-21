@@ -31,14 +31,20 @@ namespace FileService.Application.Services
         {
             //var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
 
-            this._fileDomainService.Create(new FileCreateBo()
+            var file = this._fileDomainService.Create(new FileCreateBo()
             {
                 SiteId=0,
                 Name=dto.Name,
                 Content=dto.Content,
                 AppId="hosted"
             });
-            throw new NotImplementedException();
+            return new FileDto
+            {
+                FileKey = file.FileKey,
+                SiteId = file.SiteId,
+                Name = file.Content.Name,
+                Content = file.Content.Content
+            };
         }
 
         public FileDto Create(FileCreateDto dto)
@@ -51,8 +57,14 @@ namespace FileService.Application.Services
 
         public FileDto Get(string fileKey)
         {
-            this._fileDomainService.Get(fileKey);
-            throw new NotImplementedException();
+            var file = this._fileDomainService.Get(fileKey);
+            return new FileDto
+            {
+                FileKey = file.FileKey,
+                SiteId = file.SiteId,
+                Name = file.Content.Name,
+                Content = file.Content.Content
+            };
         }
 
         public void Delete(FileDeleteDto dto)

@@ -12,6 +12,7 @@ using FileService.Domain.Specifications;
 using Comm100.Framework.Config;
 using Comm100.Framework.Exceptions;
 using Comm100.Framework.Domain.Repository;
+using System.Security.Cryptography;
 
 namespace FileService.Domain.Services
 {
@@ -20,14 +21,16 @@ namespace FileService.Domain.Services
         private readonly IConfigService _configService;
         private readonly IFileLimitDomainService _fileLimitDomainService;
         private readonly IRepository<string, File> _repository;
-        private readonly IRepository<string, FileContent> _fileContentRepository;
+        private readonly IRepository<byte[], FileContent> _fileContentRepository;
         private readonly IS3Repository _s3Repository;
+        private const string salt1 = "ADA4CDE7-C963-4FBC-BC5D-B13A85AF4A1D";
+        private const string salt2 = "89439DB7-7548-4E4C-9816-34D3D1829190";
 
         public FileDomainService(IConfigService configService,
             IFileLimitDomainService fileLimitDomainService,
             IRepository<string, File> repository,
             IS3Repository s3Repository,
-            IRepository<string, FileContent> fileContentRepository)
+            IRepository<byte[], FileContent> fileContentRepository)
         {
             this._configService = configService;
             this._fileLimitDomainService = fileLimitDomainService;
@@ -41,10 +44,25 @@ namespace FileService.Domain.Services
             //this._fileLimitDomainService.Check(new CheckFileLimitBo());
 
             var fileKey = CreateFileKey(bo);
-
-            return this._repository.Create(new File());
-
-            //throw new NotImplementedException();
+            using (MD5 md5Hash = MD5.Create())
+            {
+                var file = new File()
+                {
+                    FileKey = fileKey,
+                    SiteId = bo.SiteId,
+                    Checksum = Encoding.UTF8.GetBytes(bo.Name),
+                    Content = new FileContent()
+                    {
+                        Checksum = Encoding.UTF8.GetBytes(bo.Name),
+                        Name = bo.Name,
+                        Content = bo.Content,
+                        StorageType = StorageType.Db
+                    },
+                    CreationTime = DateTime.UtcNow,
+                    //Content=bo.Content,
+                };
+                return _repository.Create(file);
+            }
         }
 
         public File Create(File bo)
@@ -57,9 +75,10 @@ namespace FileService.Domain.Services
         public File Get(string fileKey)
         {
             // check expire, delete expire record and throw new FileKeyNotFoundException
-            return this._repository.Get(fileKey);
 
-            throw new NotImplementedException();
+            var file = this._repository.Get(fileKey);
+            file.Content = this._fileContentRepository.Get((file.Checksum));
+            return file;
         }
 
         public IReadOnlyList<File> GetList(FileFilterSpecification spec)
@@ -91,15 +110,30 @@ namespace FileService.Domain.Services
 
         private string CreateFileKey(FileCreateBo bo)
         {
-            var file = new File()
+            using (SHA512 shahash = SHA512.Create())
             {
-                FileKey = Guid.NewGuid().ToString(),
-                SiteId = bo.SiteId,
-                Content = new FileContent() { Name = bo.Name },
-                CreationTime = DateTime.UtcNow,
-                //Content=bo.Content,
-            };
-            return _repository.Create(file).FileKey;
+                Random ran = new Random();
+
+                byte[] filekeyBytes1 = shahash.ComputeHash(Encoding.UTF8.GetBytes(bo.Name + Guid.NewGuid().ToString() + salt1 + ran.Next(1, 10000).ToString()));
+                byte[] filekeyBytes2 = shahash.ComputeHash(Encoding.UTF8.GetBytes(Guid.NewGuid().ToString() + salt2 + ran.Next(1, 10000).ToString()));
+                string fileKey = (Convert.ToBase64String(filekeyBytes1, Base64FormattingOptions.None).TrimEnd('=') + Convert.ToBase64String(filekeyBytes2, Base64FormattingOptions.None).TrimEnd('=')).Replace('+', '-').Replace('/', '_');
+                string temp1 = bo.Name + Guid.NewGuid().ToString() + salt1 + ran.Next(1, 10000).ToString();
+                string temp2 = Guid.NewGuid().ToString() + salt2 + ran.Next(1, 10000).ToString();
+                return fileKey;
+            }
+
+        }
+        public static string byteToHexStr(byte[] bytes)
+        {
+            string returnStr = "";
+            if (bytes != null)
+            {
+                for (int i = 0; i < bytes.Length; i++)
+                {
+                    returnStr += bytes[i].ToString("X2");
+                }
+            }
+            return returnStr;
         }
     }
 }

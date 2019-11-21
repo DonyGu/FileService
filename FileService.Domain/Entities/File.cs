@@ -9,6 +9,6 @@ namespace FileService.Domain.Entities
         public DateTime CreationTime { get; set; }
         public DateTime? ExpireTime { get; set; }
         public byte[] Checksum { get; set; }
-        public FileContent Content { get; set; }
+        public virtual FileContent Content { get; set; }
     }
 }

@@ -1,12 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Castle.Facilities.AspNetCore;
 using Castle.MicroKernel.Registration;
 using Castle.Windsor;
 using FileService.Application.Interfaces;
 using FileService.Application.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 // using Comm100.Web.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -17,6 +19,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FileService.Web
 {
@@ -42,7 +45,30 @@ namespace FileService.Web
                 options.EnableEndpointRouting = false;
                // options.Filters.Add(typeof(Comm100ExceptionFilter));
             }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
+
+            services.AddAuthentication(auth =>
+            {
+                auth.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                auth.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(token =>
+            {
+                token.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.ASCII.GetBytes("SecretKey")),
+                    ValidateIssuer = true,
+                    ValidIssuers = new string[] { "http://localhost:45092/" },
+                    ValidateAudience = true,
+                    ValidAudience = "http://localhost:45092/",
+                    RequireExpirationTime = true,
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
             RegisterApplicationComponents(services);
+
             return services.AddWindsor(Container,
                 opts => opts.UseEntryAssembly(this.GetType().Assembly));
         }

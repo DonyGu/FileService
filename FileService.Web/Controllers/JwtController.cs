@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileService.Web.Controllers
 {
-    [Route("v1/jwtToken")]
+    [Route("v1/jwtoken")]
     [ApiController]
     public class JwtController : ControllerBase
     {
