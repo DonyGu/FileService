@@ -3,10 +3,9 @@ using FileService.Application.Dto;
 using FileService.Application.Interfaces;
 using Comm100.Framework.Config;
 using Comm100.Framework.Exceptions;
-using Comm100.Framework.Security;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
+using Microsoft.Net.Http.Headers;
 
 namespace FileService.Web.Controllers
 {
@@ -36,18 +35,30 @@ namespace FileService.Web.Controllers
             //};
             var fileDTO = this._fileAppService.Upload(dto);
 
-            return Ok(fileDTO);
+            return Ok(fileDTO.FileKey);
         }
 
         [HttpPost("{fileKey}")]
-        public ActionResult Create(string fileKey, IFormFile form)
+        public ActionResult Create(string fileKey, [FromForm]IFormFile file)
         {
-            this._fileAppService.Create(new FileCreateDto());
-            throw new NotImplementedException();
+            if (fileKey.Length != 172)
+            {
+                throw new Exception("lenth");
+            }
+            this._fileAppService.Create(new FileCreateDto()
+            {
+                File = new FileDto
+                {
+                    FileKey = fileKey,
+                    Content = StreamToBytes(file.OpenReadStream()),
+                    Name = file.FileName
+                }
+            });
+            return Ok();
         }
 
         [HttpGet("{fileKey}")]
-        public HttpResponseMessage Get(string fileKey)
+        public FileContentResult Get(string fileKey)
         {
             // cases:
             // return file content
@@ -57,17 +68,14 @@ namespace FileService.Web.Controllers
             try
             {
                 var file = this._fileAppService.Get(fileKey);
-                var result = new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+                System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
                 {
-                    Content = new ByteArrayContent(file.Content)
+                    FileName = file.Name,
+                    Inline = true  // false = prompt the user for downloading;  true = browser to try to show the file inline
                 };
-                result.Content.Headers.ContentDisposition = new System.Net.Http.Headers.ContentDispositionHeaderValue("Inline")
-                {
-                    FileName = file.Name
-                };
-                result.Content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("img/png");
-                result.Content.Headers.ContentDisposition.FileName = file.Name;
-                return result;
+                Response.Headers.Add("Content-Disposition", cd.ToString());
+                Response.Headers.Add("X-Content-Type-Options", "nosniff");
+                return File(file.Content, "application/octet-stream", DateTimeOffset.Now.AddSeconds(1), new EntityTagHeaderValue(new Microsoft.Extensions.Primitives.StringSegment("\"inline\"")));
             }
             catch (FileKeyNotFoundException)
             {
