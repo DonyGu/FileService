@@ -9,7 +9,6 @@ namespace FileService.Domain.Specifications
         public FileFilterSpecification(int count, StorageType? storageType)
             : base(f => f.Content.StorageType == storageType)
         {
-            throw new NotImplementedException();
         }
     }
 }

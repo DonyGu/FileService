@@ -13,7 +13,7 @@ namespace FileService.Domain.Interfaces
         bool Exist(string fileKey);
         IReadOnlyList<File> GetList(FileFilterSpecification spec);
         // move file to s3 and update db
-        void MoveToRemote(string fileKey);
+        void MoveToRemote(File file);
         // delete record from t_fileService_file and s3
         void Delete(string fileKey);
     }

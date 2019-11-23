@@ -24,7 +24,7 @@ namespace FileService.Web.DbToS3.Controllers
         public void Start()
         {
             this._dbToS3Service.Start();
-            this._deleteExpiredFilesService.Start();
+            //this._deleteExpiredFilesService.Start();
         }
     }
 }

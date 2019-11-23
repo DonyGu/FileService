@@ -36,18 +36,16 @@ namespace FileService.Domain.Services
             var tasks = files.Select((f) =>
                 Task.Run(() =>
                 {
-                    if (f.ExpireTime <= DateTime.UtcNow)
-                    {
-                        this._fileDomainService.Delete(f.FileKey);
-                        return;
-                    }
-                    this._fileDomainService.MoveToRemote(f.FileKey);
+                    //if (f.ExpireTime <= DateTime.UtcNow)
+                    //{
+                    //    this._fileDomainService.Delete(f.FileKey);
+                    //    return;
+                    //}
+                    this._fileDomainService.MoveToRemote(f);
                 })).ToArray();
 
             // wait until all finish
             Task.WaitAll(tasks);
-
-            throw new NotImplementedException();
         }
     }
 }

@@ -21,13 +21,16 @@ namespace FileService.Domain.Services
         private readonly IRepository<string, File> _repository;
         private readonly IRepository<byte[], FileContent> _fileContentRepository;
         private readonly IS3Repository _s3Repository;
+        private readonly IConfigService _configService;
 
-        public FileDomainService(IRepository<string, File> repository, IS3Repository s3Repository, IRepository<byte[], FileContent> fileContentRepository)
+        public FileDomainService(IRepository<string, File> repository, IS3Repository s3Repository
+            , IRepository<byte[], FileContent> fileContentRepository, IConfigService configService)
         {
             this._repository = repository;
             this._s3Repository = s3Repository;
             this._fileContentRepository = fileContentRepository;
-        }
+            this._configService = configService;
+;        }
 
         public File Create(File bo)
         {
@@ -54,12 +57,14 @@ namespace FileService.Domain.Services
             throw new NotImplementedException();
         }
 
-        public void MoveToRemote(string fileKey)
+        public void MoveToRemote(File file)
         {
-            this._repository.Update(new File());
-            this._s3Repository.Put(new S3SettingsBo(), new S3FileBo());
-
-            throw new NotImplementedException();
+            var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
+            var s3FileBo = S3FileBoMapping(file, s3Setting);
+            file.Content.StorageType = StorageType.S3;
+            file.Content.Link = s3FileBo.Link;
+            this._repository.Update(file);
+            this._s3Repository.Put(s3Setting, s3FileBo);
         }
 
         public void Delete(string fileKey)
@@ -74,7 +79,15 @@ namespace FileService.Domain.Services
             throw new NotImplementedException();
         }
 
-
+        private S3FileBo S3FileBoMapping(File file, S3SettingsBo s3SettingsBo)
+        {
+            return new S3FileBo
+            {
+                Name = file.Content.Name,
+                Link = $"{s3SettingsBo.Address}/{file.FileKey.Substring(0,2)}/{file.FileKey.Substring(2,file.FileKey.Length-2)}/{file.Content.Name}",
+                Content=file.Content.Content
+            };
+        }
 
     }
 }
