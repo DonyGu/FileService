@@ -17,12 +17,12 @@ namespace Comm100.Framework.Config
 
         public static int GetInt(this IConfigService config, string key)
         {
-            throw new NotImplementedException();
+            return Convert.ToInt32(config.Get(key));
         }
 
         public static DateTime GetDateTime(this IConfigService config, string key)
         {
-            throw new NotImplementedException();
+            return Convert.ToDateTime(config.Get(key));
         }
 
         public static T GetJson<T>(this IConfigService config, string key)

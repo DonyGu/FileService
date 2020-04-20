@@ -14,7 +14,7 @@ namespace FileService.Domain.Specifications
             throw new NotImplementedException();
         }
 
-        public FileContentFilterSpecification(int count, StorageType? storageType)
+        public FileContentFilterSpecification(StorageType? storageType)
             :base(_=>true)
         {
             throw new NotImplementedException();

@@ -6,9 +6,26 @@ namespace FileService.Domain.Specifications
 {
     public class FileFilterSpecification : BaseSpecification<File>
     {
-        public FileFilterSpecification(int count, StorageType? storageType)
+        public FileFilterSpecification(StorageType? storageType)
             : base(f => f.Content.StorageType == storageType)
         {
         }
+        public FileFilterSpecification(byte[] checksum)
+            : base(f => f.Checksum == checksum)
+        {
+        }
+        public FileFilterSpecification(DateTime dateTime)
+            : base(f => f.ExpireTime < dateTime)
+        {
+        }
+        public void ApplyPaging(int pageIndex, int pageSize)
+        {
+            base.ApplyPaging(pageIndex, pageSize);
+        }
+        public void AddContentInclude()
+        {
+            base.AddInclude((a => a.Content));
+        }
+
     }
 }

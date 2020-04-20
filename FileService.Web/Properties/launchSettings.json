@@ -12,7 +12,7 @@
     "IIS Express": {
       "commandName": "IISExpress",
       "launchBrowser": true,
-      "launchUrl": "files/version",
+      "launchUrl": "v1/files/version",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }

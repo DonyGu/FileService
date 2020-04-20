@@ -1,5 +1,6 @@
 using System.Threading;
 using Comm100.Framework;
+using Comm100.Framework.Common;
 using FileService.Application.Interfaces;
 using FileService.Domain.Interfaces;
 
@@ -29,11 +30,11 @@ namespace FileService.Application.Services
         {
             if (this._thread.Start())
             {
-                // log start now
+                LogHelper.ErrorLog("DeleteExpiredFilesDomainService start.");
             }
             else
             {
-                // log already started before
+                LogHelper.ErrorLog("DeleteExpiredFilesDomainService  already started before.");
             }
         }
     }

@@ -14,17 +14,24 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileService.Web.DbToS3.Controllers
 {
+    [Route("")]
     [ApiController]
     public class StartController : ControllerBase
     {
         public readonly IDbToS3Service _dbToS3Service;
         public readonly IDeleteExpriedFilesService _deleteExpiredFilesService;
 
+        public StartController(IDbToS3Service dbToS3Service, IDeleteExpriedFilesService deleteExpriedFilesService)
+        {
+            this._dbToS3Service = dbToS3Service;
+            this._deleteExpiredFilesService = deleteExpriedFilesService;
+        }
         [HttpGet]
-        public void Start()
+        public string Start()
         {
             this._dbToS3Service.Start();
-            //this._deleteExpiredFilesService.Start();
+            this._deleteExpiredFilesService.Start();
+            return "start";
         }
     }
 }

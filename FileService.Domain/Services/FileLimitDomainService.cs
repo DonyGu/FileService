@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Comm100.Framework.Common;
 using Comm100.Framework.Config;
 using Comm100.Framework.Domain.Repository;
 using Comm100.Framework.Exceptions;
@@ -21,13 +22,18 @@ namespace FileService.Domain.Services
 
         public void Check(CheckFileLimitBo bo)
         {
-            throw new System.NotImplementedException();
+            CheckSize(bo);
+            CheckBlackList(bo);
         }
 
         private void CheckSize(CheckFileLimitBo bo)
         {
-            var maxSize = this._repository.Get(bo.AppId).MaxSize;
-            throw new NotImplementedException();
+            var maxSize = this._repository.Get(bo.AppId).Result.MaxSize;
+
+            if (bo.Content.Length > maxSize)
+            {
+                throw new FileTooLargeException(maxSize);
+            }
         }
 
         private void CheckBlackList(CheckFileLimitBo bo)
@@ -36,7 +42,7 @@ namespace FileService.Domain.Services
             var files = ExpandFile(bo);
 
             // throw exception if not all files pass test
-            if (!files.All(f => TestFile(f, blackList)))
+            if (!files.All(f => FileHelper.CheckFileNameLegitimacy(f.name, f.content, blackList)))
             {
                 throw new FileNotAllowedException();
             }
@@ -45,40 +51,19 @@ namespace FileService.Domain.Services
         private NameAndContent[] ExpandFile(CheckFileLimitBo bo)
         {
             // how deep?
-            throw new NotImplementedException();
-        }
-
-        private bool TestFile(NameAndContent f, string[] blackList)
-        {
-            if (blackList.Any(blob => IsMatch(f.name, blob)))
-            {
-                return false;
-            }
-
-            if (IsExe(f.content))
-            {
-                return false;
-            }
-
-            return true;
-        }
-
-        private bool IsMatch(string name, string blob)
-        {
-            throw new NotImplementedException();
-        }
-
-        private bool IsExe(byte[] content)
-        {
-            throw new NotImplementedException();
+            //throw new NotImplementedException();
+            var result = new NameAndContent();
+            result.name = bo.Name;
+            result.content = bo.Content;
+            return new NameAndContent[] { result };
         }
 
         class NameAndContent
         {
-            #pragma warning disable 0649
+#pragma warning disable 0649
             public string name;
             public byte[] content;
-            #pragma warning restore 0649
+#pragma warning restore 0649
         }
     }
 }

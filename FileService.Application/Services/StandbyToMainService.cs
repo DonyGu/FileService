@@ -32,7 +32,7 @@ namespace FileService.Application.Services
                 Thread.Sleep(1000);
             }
         }
-
+        
         public void Start()
         {
             this._thread.Start();

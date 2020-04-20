@@ -12,7 +12,7 @@ namespace Comm100.Framework.Config
         }
         public string Get(string key)
         {
-            return _repository.Get(key).Value;
+            return _repository.Get(key).Result.Value;
         }
     }
 }

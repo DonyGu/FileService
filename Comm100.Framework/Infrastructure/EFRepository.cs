@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Comm100.Framework.Infrastructure
 {
@@ -28,20 +29,20 @@ namespace Comm100.Framework.Infrastructure
             return entity;
         }
 
-        public void Delete(TEntity entity)
+        public async Task Delete(TEntity entity)
         {
             _dbContext.Set<TEntity>().Remove(entity);
-            _dbContext.SaveChanges();
+            await _dbContext.SaveChangesAsync();
         }
-        public void Update(TEntity entity)
+        public async Task Update(TEntity entity)
         {
             _dbContext.Entry(entity).State = EntityState.Modified;
-            _dbContext.SaveChangesAsync();
+            await _dbContext.SaveChangesAsync();
         }
 
-        public TEntity Get(TId id)
+        public async Task<TEntity> Get(TId id)
         {
-            return _dbContext.Set<TEntity>().Find(id);
+             return await _dbContext.Set<TEntity>().FindAsync(id);
         }
 
         public bool Exists(TId id)

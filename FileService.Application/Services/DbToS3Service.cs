@@ -8,6 +8,7 @@ using FileService.Application.Dto;
 using System.Linq;
 using FileService.Domain.Interfaces;
 using Comm100.Framework;
+using Comm100.Framework.Common;
 
 namespace FileService.Application.Services
 {
@@ -35,11 +36,11 @@ namespace FileService.Application.Services
         {
             if (this._thread.Start())
             {
-                // log start now
+                LogHelper.ErrorLog("DbToS3 start.");
             }
             else
             {
-                // log already started before
+                LogHelper.ErrorLog("DbToS3 already started before.");
             }
         }
     }

@@ -30,19 +30,28 @@ namespace FileService.Domain.Services
             this._s3Repository = s3Repository;
             this._fileContentRepository = fileContentRepository;
             this._configService = configService;
-;        }
+            ;
+        }
 
         public File Create(File bo)
         {
+            if (_fileContentRepository.Exists(bo.Checksum))
+            {
+                bo.Content = null;
+            }
             return this._repository.Create(bo);
         }
 
         public File Get(string fileKey)
         {
+            var file = this._repository.Get(fileKey).Result;
+            if (file == null)
+            {
+                throw new FileKeyNotFoundException();
+            }
+            file.Content = this._fileContentRepository.Get((file.Checksum)).Result;
             // check expire, delete expire record and throw new FileKeyNotFoundException
-
-            var file = this._repository.Get(fileKey);
-            file.Content = this._fileContentRepository.Get((file.Checksum));
+            DeleteOneExpiredFile(file);
             return file;
         }
 
@@ -53,39 +62,70 @@ namespace FileService.Domain.Services
 
         public IReadOnlyList<File> GetList(FileFilterSpecification spec)
         {
-
-            throw new NotImplementedException();
+            return _repository.List(spec);
         }
 
         public void MoveToRemote(File file)
         {
             var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
             var s3FileBo = S3FileBoMapping(file, s3Setting);
+            this._s3Repository.Put(s3Setting, s3FileBo);
             file.Content.StorageType = StorageType.S3;
             file.Content.Link = s3FileBo.Link;
+            //file.Content.Content = null;
             this._repository.Update(file);
-            this._s3Repository.Put(s3Setting, s3FileBo);
         }
 
         public void Delete(string fileKey)
         {
-            this._repository.Delete(this._repository.Get(fileKey));
-            this._s3Repository.Delete(new S3SettingsBo(), fileKey);
-            throw new NotImplementedException();
+            var file = this._repository.Get(fileKey).Result;
+            var fileContent = this._fileContentRepository.Get((file.Checksum)).Result;
+            this._repository.Delete(file);
+            if (CountContentFiles(fileContent.Checksum)==0)
+            {
+                if (fileContent.StorageType == StorageType.S3)
+                {
+                    var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
+                    this._s3Repository.Delete(s3Setting, fileContent.Link);
+                }
+                this._fileContentRepository.Delete(fileContent);
+            }
+         
         }
 
-        public void DeleteOneExpiredFile()
+        public void DeleteOneExpiredFile(File file)
         {
-            throw new NotImplementedException();
+            var fileContent = file.Content;
+            if (file.ExpireTime < DateTime.UtcNow)
+            {
+                _repository.Delete(file);
+                
+                if (CountContentFiles(fileContent.Checksum) == 0)
+                {
+                    if (fileContent.StorageType == StorageType.S3)
+                    {
+                        var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
+                        this._s3Repository.Delete(s3Setting, fileContent.Link);
+                    }
+                    this._fileContentRepository.Delete(fileContent);
+                }
+                throw new FileKeyNotFoundException();
+            }
         }
+
+        public int CountContentFiles(byte[] checksum)
+        {
+            return _repository.Count(new FileFilterSpecification(checksum));
+        }
+
 
         private S3FileBo S3FileBoMapping(File file, S3SettingsBo s3SettingsBo)
         {
             return new S3FileBo
             {
                 Name = file.Content.Name,
-                Link = $"{s3SettingsBo.Address}/{file.FileKey.Substring(0,2)}/{file.FileKey.Substring(2,file.FileKey.Length-2)}/{file.Content.Name}",
-                Content=file.Content.Content
+                Link = $"{s3SettingsBo.Address}/{file.SiteId}/{file.FileKey.Substring(0, 2)}/{file.FileKey.Substring(2, file.FileKey.Length - 2)}",
+                Content = file.Content.Content
             };
         }
 

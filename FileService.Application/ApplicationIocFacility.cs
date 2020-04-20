@@ -17,9 +17,9 @@ namespace FileService.Application
 
             Kernel.Register(
                Component.For(typeof(IDbToS3Service)).ImplementedBy(typeof(DbToS3Service))
-                        .LifestyleScoped(),
+                        .LifestyleSingleton(),
                Component.For(typeof(IDeleteExpriedFilesService)).ImplementedBy(typeof(DeleteExpiredFilesService))
-                            .LifestyleScoped(),
+                            .LifestyleSingleton(),
                Component.For(typeof(IFileAppService)).ImplementedBy(typeof(FileAppService))
                             .LifestyleScoped(),
                Component.For(typeof(IFileAuthService)).ImplementedBy(typeof(FileAuthService))

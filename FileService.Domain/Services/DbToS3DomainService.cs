@@ -7,6 +7,9 @@ using System.Threading.Tasks;
 using FileService.Domain.Specifications;
 using System.Linq;
 using Comm100.Framework.Domain.Repository;
+using Comm100.Framework.Common;
+using Castle.Windsor;
+using Castle.MicroKernel.Lifestyle;
 
 namespace FileService.Domain.Services
 {
@@ -14,38 +17,47 @@ namespace FileService.Domain.Services
     {
         IConfigService _configService;
         IFileDomainService _fileDomainService;
-        IS3Repository _s3Repository;
-        IRepository<byte[], FileContent> _linkRepository;
+        IWindsorContainer _container;
 
         public DbToS3DomainService(
             IConfigService configService,
             IFileDomainService fileDomainService,
-            IS3Repository s3Repository,
-            IRepository<byte[], FileContent> linkRepository)
+            IWindsorContainer container)
         {
             this._configService = configService;
             this._fileDomainService = fileDomainService;
-            this._s3Repository = s3Repository;
-            this._linkRepository = linkRepository;
+            this._container = container;
         }
 
         public void MoveToS3()
         {
-            var n = this._configService.GetInt("DbToS3WorkerNum");
-            var files = this._fileDomainService.GetList(new FileFilterSpecification(n, StorageType.Db));
+            var count = this._configService.GetInt("DbToS3WorkerNum");
+            var spec = new FileFilterSpecification(StorageType.Db);
+            spec.ApplyPaging(1, count);
+            spec.AddContentInclude();
+            var files = this._fileDomainService.GetList(spec);
             var tasks = files.Select((f) =>
                 Task.Run(() =>
                 {
-                    //if (f.ExpireTime <= DateTime.UtcNow)
-                    //{
-                    //    this._fileDomainService.Delete(f.FileKey);
-                    //    return;
-                    //}
-                    this._fileDomainService.MoveToRemote(f);
+                    try
+                    {
+                        if (f.ExpireTime <= DateTime.UtcNow)
+                        {
+                            this._fileDomainService.Delete(f.FileKey);
+                            return;
+                        }
+                        this._fileDomainService.MoveToRemote(f);
+                    }
+                    catch (Exception ex)
+                    {
+                        LogHelper.ErrorLog(ex.Message, ex);
+                    }
+
                 })).ToArray();
 
             // wait until all finish
             Task.WaitAll(tasks);
         }
+
     }
 }

@@ -15,12 +15,14 @@ namespace FileService.Application.Interfaces
 
         // throw AuthorizationException when SharedSecret is not match or IP not in white list
         void VerifyComm100Platform(AuthComm100Platform auth);
+
+        string GenerateToken(JwtPayloadDto jwtPayloadDto);
     }
 
     public class FileServiceJwt
     {
         public int SiteId { get; set; }
         public int ExpireInDays { get; set; }
-        public int AppId { get; set; }
+        public string AppId { get; set; }
     }
 }

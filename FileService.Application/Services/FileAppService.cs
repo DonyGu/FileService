@@ -11,41 +11,40 @@ using Comm100.Framework.Config;
 using FileService.Application.Interfaces;
 using System.Security.Cryptography;
 using System.Linq;
+using Comm100.Framework.Exceptions;
 
 namespace FileService.Application.Services
 {
     public class FileAppService : IFileAppService
     {
         private readonly IFileDomainService _fileDomainService;
+        private readonly IFileLimitDomainService _fileLimitDomainService;
         private readonly IFileAuthService _fileAuthService;
-        private readonly IConfigService _configService;
         private const string salt1 = "ADA4CDE7-C963-4FBC-BC5D-B13A85AF4A1D";
         private const string salt2 = "89439DB7-7548-4E4C-9816-34D3D1829190";
 
-        public FileAppService(IFileDomainService fileDomainService,
-            IFileAuthService authService,
-            IConfigService configService)
+        public FileAppService(IFileDomainService fileDomainService, IFileAuthService authService, IFileLimitDomainService fileLimitDomainService)
         {
             this._fileDomainService = fileDomainService;
-            this._configService = configService;
             this._fileAuthService = authService;
+            this._fileLimitDomainService = fileLimitDomainService;
         }
 
         public FileDto Upload(FileUploadDto dto)
         {
-            //var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
-
-            var file = FileMapping(dto);
+            var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
+            this._fileLimitDomainService.Check(new CheckFileLimitBo() { AppId = jwtResult.AppId, Name = dto.Name, Content = dto.Content });
+            var file = FileMapping(dto, jwtResult);
             var result = this._fileDomainService.Create(file);
             return FileDtoMapping(result);
         }
 
         public FileDto Create(FileCreateDto dto)
         {
-            //this._fileAuthService.VerifyComm100Platform(dto.Auth);
+            this._fileAuthService.VerifyComm100Platform(dto.Auth);
             if (_fileDomainService.Exist(dto.File.FileKey))
             {
-                throw new Exception("FileKey exist");
+                throw new FileKeyExistsException();
             }
             var file = FileMapping(dto);
             var result = this._fileDomainService.Create(file);
@@ -63,7 +62,6 @@ namespace FileService.Application.Services
             this._fileAuthService.VerifyComm100Platform(dto.Auth);
 
             this._fileDomainService.Delete(dto.FileKey);
-            throw new NotImplementedException();
         }
 
         private File FileMapping(FileCreateDto dto)
@@ -72,8 +70,9 @@ namespace FileService.Application.Services
             return new File()
             {
                 FileKey = dto.File.FileKey,
-                SiteId = 0,
+                SiteId = dto.File.SiteId,
                 Checksum = checksum,
+                ExpireTime = dto.File.ExpireTime,
                 Content = new FileContent()
                 {
                     Checksum = checksum,
@@ -85,15 +84,16 @@ namespace FileService.Application.Services
                 CreationTime = DateTime.UtcNow,
             };
         }
-        private File FileMapping(FileUploadDto dto)
+        private File FileMapping(FileUploadDto dto, FileServiceJwt fileServiceJwt)
         {
             var fileKey = CreateFileKey(dto.Name);
             var checksum = CalCulateChecksum(dto.Name, dto.Content);
             return new File()
             {
                 FileKey = fileKey,
-                SiteId = 0,
+                SiteId = fileServiceJwt.SiteId,
                 Checksum = checksum,
+                ExpireTime = fileServiceJwt.ExpireInDays == 0 ? DateTime.MaxValue : DateTime.UtcNow.AddDays(fileServiceJwt.ExpireInDays),
                 Content = new FileContent()
                 {
                     Checksum = checksum,
@@ -112,7 +112,11 @@ namespace FileService.Application.Services
                 FileKey = file.FileKey,
                 SiteId = file.SiteId,
                 Name = file.Content.Name,
-                Content = file.Content.Content
+                Content = file.Content.Content,
+                StorageType = file.Content.StorageType,
+                Link = file.Content.Link,
+                CreationTime = file.CreationTime,
+                ExpireTime = file.ExpireTime
             };
         }
         private string CreateFileKey(string name)

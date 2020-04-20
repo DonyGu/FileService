@@ -2,15 +2,22 @@
 
     <PropertyGroup>
         <TargetFramework>netcoreapp3.0</TargetFramework>
-        <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+        <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
     </PropertyGroup>
 
     <ItemGroup>
+      <Compile Remove="Logs\**" />
+      <Compile Remove="Log\**" />
+      <Content Remove="Logs\**" />
+      <Content Remove="Log\**" />
+      <EmbeddedResource Remove="Logs\**" />
+      <EmbeddedResource Remove="Log\**" />
+      <None Remove="Logs\**" />
+      <None Remove="Log\**" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Castle.Facilities.AspNetCore" Version="5.0.1" />
-        <PackageReference Include="Microsoft.AspNetCore.App">
-          <PrivateAssets Condition="'%(PackageReference.Version)' == ''">all</PrivateAssets>
-          <Publish Condition="'%(PackageReference.Version)' == ''">true</Publish>
-        </PackageReference>
         <PackageReference Include="Microsoft.AspNetCore.Mvc.Abstractions" Version="2.2.0" />
         <PackageReference Include="Microsoft.AspNetCore.Razor.Design" Version="2.2.0" PrivateAssets="All" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="3.0.0" />
@@ -21,6 +28,12 @@
         <ProjectReference Include="..\FileService.Application\FileService.Application.csproj" />
         <ProjectReference Include="..\FileService.Infrastructure\FileService.Infrastructure.csproj" />
         <ProjectReference Include="..\Comm100.Framework\Comm100.Framework.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Content Update="log4net.config">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
 
 </Project>

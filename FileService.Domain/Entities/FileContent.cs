@@ -10,7 +10,7 @@ namespace FileService.Domain.Entities
         public byte[] Content { get; set; }
         public string Link { get; set; }
         public StorageType StorageType { get; set; }
-        public virtual ICollection<File> File { get; set; }
+        public virtual ICollection<File> Files { get; set; }
     }
 
     public enum StorageType

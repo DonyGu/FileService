@@ -16,7 +16,7 @@ namespace FileService.Infrastructure
             Kernel.Register(
                Component.For(typeof(DbContext))
                         .ImplementedBy(typeof(FileDbContext))
-                        .LifestyleScoped(),
+                        .LifestylePerThread(),
                Component.For(typeof(IS3Repository))
                         .ImplementedBy(typeof(S3Repository))
                         .LifestyleScoped()

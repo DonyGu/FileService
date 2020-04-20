@@ -22,6 +22,8 @@ namespace FileService.Domain
                Component.For(typeof(IFileLimitDomainService)).ImplementedBy(typeof(FileLimitDomainService))
                             .LifestyleScoped(),
                Component.For(typeof(IStandbyToMainDomainService)).ImplementedBy(typeof(StandbyToMainDomainService))
+                            .LifestyleScoped(),
+               Component.For(typeof(IJwtCertificateService)).ImplementedBy(typeof(JwtCertificateService))
                             .LifestyleScoped()
                 );
         }

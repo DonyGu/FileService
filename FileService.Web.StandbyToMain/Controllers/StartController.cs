@@ -14,11 +14,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace FileService.Web.StandbyToMain.Controllers
 {
+    [Route("")]
     [ApiController]
     public class StartController : ControllerBase
     {
         public readonly IStandbyToMainService _standbyToMainService;
-
+        public StartController(IStandbyToMainService standbyToMainService)
+        {
+            _standbyToMainService = standbyToMainService;
+        }
         [HttpGet]
         public void Start()
         {

@@ -17,8 +17,17 @@ namespace FileService.Web
             CreateWebHostBuilder(args).Build().Run();
         }
 
+
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+             .ConfigureAppConfiguration((hostingContext, config) =>
+             {
+                 var env = hostingContext.HostingEnvironment;
+
+                 var sharedFolder = Path.Combine(env.ContentRootPath, "..");
+                 config
+                        .AddJsonFile(Path.Combine(sharedFolder, "appsettings.json"), optional: true);
+             })
                 .UseStartup<Startup>();
     }
 }

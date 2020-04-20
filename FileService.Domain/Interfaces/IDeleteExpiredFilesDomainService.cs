@@ -1,7 +1,9 @@
+using System.Threading.Tasks;
+
 namespace FileService.Domain.Interfaces
 {
     public interface IDeleteExpiredFilesDomainService
     {
-        void DeleteAnExpiredFile();
+        Task DeleteAnExpiredFile();
     }
 }
