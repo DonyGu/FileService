@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Comm100.Framework.Common;
 using Comm100.Framework.Config;
 using Comm100.Framework.Domain.Repository;
@@ -20,32 +21,35 @@ namespace FileService.Domain.Services
             this._repository = repository;
         }
 
-        public void Check(CheckFileLimitBo bo)
+        public async Task Check(CheckFileLimitBo bo)
         {
-            CheckSize(bo);
-            CheckBlackList(bo);
+            await CheckSize(bo);
+            await CheckBlackList(bo);
         }
 
-        private void CheckSize(CheckFileLimitBo bo)
+        private async Task CheckSize(CheckFileLimitBo bo)
         {
-            var maxSize = this._repository.Get(bo.AppId).Result.MaxSize;
+            var fileLimit = await this._repository.Get(bo.AppId);
 
-            if (bo.Content.Length > maxSize)
+            if (bo.Content.Length > fileLimit.MaxSize)
             {
-                throw new FileTooLargeException(maxSize);
+                throw new FileTooLargeException(fileLimit.MaxSize);
             }
         }
 
-        private void CheckBlackList(CheckFileLimitBo bo)
+        private async Task CheckBlackList(CheckFileLimitBo bo)
         {
-            var blackList = _configService.GetJson<string[]>("FileBlackList");
+            var blackList =await _configService.GetJson<string[]>("FileBlackList");
             var files = ExpandFile(bo);
-
+            FileLegitimacyChecker fileLegitimacyChecker = new FileLegitimacyChecker(blackList);
+             
             // throw exception if not all files pass test
-            if (!files.All(f => FileHelper.CheckFileNameLegitimacy(f.name, f.content, blackList)))
+            if (!files.All(f => fileLegitimacyChecker.FileLegitimacyCheck(f.name, f.content)))
             {
                 throw new FileNotAllowedException();
             }
+            return ;
+
         }
 
         private NameAndContent[] ExpandFile(CheckFileLimitBo bo)

@@ -1,39 +1,45 @@
 using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Comm100.Framework.Config
 {
     public interface IConfigService
     {
-        string Get(string key);
+        Task<string> Get(string key);
+        IReadOnlyList<Config> List();
+        Task Set(string key, string value);
+
+        Task<string> TryGet(string key, string defaultValue);
     }
 
     public static class ConfigServiceExtension
     {
-        public static bool GetBool(this IConfigService config, string key)
+        public async static Task<bool> GetBool(this IConfigService config, string key)
         {
-            return Convert.ToBoolean(config.Get(key));
+            return Convert.ToBoolean(await config.Get(key));
         }
 
-        public static int GetInt(this IConfigService config, string key)
+        public async static Task<int> GetInt(this IConfigService config, string key)
         {
-            return Convert.ToInt32(config.Get(key));
+            return Convert.ToInt32(await config.Get(key));
         }
 
-        public static DateTime GetDateTime(this IConfigService config, string key)
+        public async static Task<DateTime> GetDateTime(this IConfigService config, string key)
         {
-            return Convert.ToDateTime(config.Get(key));
+            return Convert.ToDateTime(await config.Get(key));
         }
 
-        public static T GetJson<T>(this IConfigService config, string key)
+        public async static Task<T> GetJson<T>(this IConfigService config, string key)
         {
-            var value = config.Get(key);
+            var value = await config.Get(key);
             return JsonConvert.DeserializeObject<T>(value);
         }
 
-        public static byte[] GetFile(this IConfigService config, string key)
+        public async static Task<byte[]> GetFile(this IConfigService config, string key)
         {
-            var value = config.Get(key);
+            var value = await config.Get(key);
             return System.IO.File.ReadAllBytes(value);
         }
     }

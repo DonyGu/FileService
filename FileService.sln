@@ -9,13 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService.Application", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService.Domain", "FileService.Domain\FileService.Domain.csproj", "{CC34C2E2-4CB7-4333-812D-584537C81423}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Comm100.Framework", "Comm100.Framework\Comm100.Framework.csproj", "{ABF79B60-3C7F-4D29-B3BE-BB966C75DC4E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Comm100.Framework", "Comm100.Framework\Comm100.Framework.csproj", "{ABF79B60-3C7F-4D29-B3BE-BB966C75DC4E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileService.Infrastructure", "FileService.Infrastructure\FileService.Infrastructure.csproj", "{B2DDFE2C-72BE-4D84-B8E9-302C52283213}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService.Infrastructure", "FileService.Infrastructure\FileService.Infrastructure.csproj", "{B2DDFE2C-72BE-4D84-B8E9-302C52283213}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileService.Web.DbToS3", "FileService.Web.DbToS3\FileService.Web.DbToS3.csproj", "{DC659609-44B0-4D2E-B0C3-E45FC7CBCC4C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService.Web.DbToS3", "FileService.Web.DbToS3\FileService.Web.DbToS3.csproj", "{DC659609-44B0-4D2E-B0C3-E45FC7CBCC4C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileService.Web.StandbyToMain", "FileService.Web.StandbyToMain\FileService.Web.StandbyToMain.csproj", "{12B366DD-D759-4F19-9AA6-8F96DCCAEA95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileService.Web.StandbyToMain", "FileService.Web.StandbyToMain\FileService.Web.StandbyToMain.csproj", "{12B366DD-D759-4F19-9AA6-8F96DCCAEA95}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,18 +35,6 @@ Global
 		{CC34C2E2-4CB7-4333-812D-584537C81423}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC34C2E2-4CB7-4333-812D-584537C81423}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC34C2E2-4CB7-4333-812D-584537C81423}.Release|Any CPU.Build.0 = Release|Any CPU
-		{02363F89-75ED-46EE-90DA-64F5E46DB9B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{02363F89-75ED-46EE-90DA-64F5E46DB9B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{02363F89-75ED-46EE-90DA-64F5E46DB9B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{02363F89-75ED-46EE-90DA-64F5E46DB9B1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{ADAA2EAE-0E0D-4DB1-964A-7FC24C75FC7D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ADAA2EAE-0E0D-4DB1-964A-7FC24C75FC7D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ADAA2EAE-0E0D-4DB1-964A-7FC24C75FC7D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ADAA2EAE-0E0D-4DB1-964A-7FC24C75FC7D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F806B497-EA98-4FA5-92E2-6AF35191F016}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F806B497-EA98-4FA5-92E2-6AF35191F016}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F806B497-EA98-4FA5-92E2-6AF35191F016}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F806B497-EA98-4FA5-92E2-6AF35191F016}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ABF79B60-3C7F-4D29-B3BE-BB966C75DC4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{ABF79B60-3C7F-4D29-B3BE-BB966C75DC4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ABF79B60-3C7F-4D29-B3BE-BB966C75DC4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -67,9 +55,34 @@ Global
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6B94FE69-D138-43EA-9DE1-EBA06458251F}
+	EndGlobalSection
+	GlobalSection(TeamFoundationVersionControl) = preSolution
+		SccNumberOfProjects = 8
+		SccEnterpriseProvider = {4CA58AB2-18FA-4F8D-95D4-32DDF27D184C}
+		SccTeamFoundationServer = http://192.168.3.200:8080/tfs/defaultcollection
+		SccLocalPath0 = .
+		SccProjectUniqueName1 = Comm100.Framework\\Comm100.Framework.csproj
+		SccProjectName1 = Comm100.Framework
+		SccLocalPath1 = Comm100.Framework
+		SccProjectUniqueName2 = FileService.Application\\FileService.Application.csproj
+		SccProjectName2 = FileService.Application
+		SccLocalPath2 = FileService.Application
+		SccProjectUniqueName3 = FileService.Domain\\FileService.Domain.csproj
+		SccProjectName3 = FileService.Domain
+		SccLocalPath3 = FileService.Domain
+		SccProjectUniqueName4 = FileService.Infrastructure\\FileService.Infrastructure.csproj
+		SccProjectName4 = FileService.Infrastructure
+		SccLocalPath4 = FileService.Infrastructure
+		SccProjectUniqueName5 = FileService.Web.DbToS3\\FileService.Web.DbToS3.csproj
+		SccProjectName5 = FileService.Web.DbToS3
+		SccLocalPath5 = FileService.Web.DbToS3
+		SccProjectUniqueName6 = FileService.Web.StandbyToMain\\FileService.Web.StandbyToMain.csproj
+		SccProjectName6 = FileService.Web.StandbyToMain
+		SccLocalPath6 = FileService.Web.StandbyToMain
+		SccProjectUniqueName7 = FileService.Web\\FileService.Web.csproj
+		SccProjectName7 = FileService.Web
+		SccLocalPath7 = FileService.Web
 	EndGlobalSection
 EndGlobal

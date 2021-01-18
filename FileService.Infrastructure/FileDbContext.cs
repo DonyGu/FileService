@@ -1,3 +1,5 @@
+using Comm100.Framework.Common;
+using Comm100.Framework.Infrastructure;
 using FileService.Domain.Entities;
 using FileService.Infrastructure.EntityConfigurations;
 using Microsoft.EntityFrameworkCore;
@@ -7,15 +9,17 @@ namespace FileService.Infrastructure
 {
     public class FileDbContext : DbContext
     {
-        public string connectString { get; set; }
+        public string ConnectionString { get; private set; }
         public FileDbContext(IConfiguration configuration)
         {
-            this.connectString = configuration.GetConnectionString("DefaultConnection");
+            var connectionString = configuration.GetDatabaseConnectionString("Configuration", "File");
+            this.ConnectionString = connectionString;
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlServer(connectString);
+            optionsBuilder.UseSqlServer(ConnectionString);
+            //optionsBuilder.AddInterceptors(new HintInterceptor());
         }
 
         public virtual DbSet<File> Files { get; set; }

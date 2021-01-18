@@ -27,11 +27,12 @@ namespace FileService.Domain.Services
                 {
                     try
                     {
-                        this._fileDomainService.Delete(item.FileKey);
+                        await this._fileDomainService.Delete(item.FileKey);
+
                     }
                     catch (Exception ex)
                     {
-                        LogHelper.ErrorLog(ex.Message, ex);
+                        LogHelper.Error(ex, ex.Message);
                     }
                 }
             }

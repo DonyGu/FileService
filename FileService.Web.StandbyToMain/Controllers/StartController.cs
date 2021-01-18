@@ -24,9 +24,10 @@ namespace FileService.Web.StandbyToMain.Controllers
             _standbyToMainService = standbyToMainService;
         }
         [HttpGet]
-        public void Start()
+        public string Start()
         {
-            this._standbyToMainService.Start();
+            //this._standbyToMainService.Start();
+            return "start";
         }
     }
 }

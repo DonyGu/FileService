@@ -5,18 +5,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace FileService.Application.Interfaces
 {
     public interface IFileAuthService
     {
         // throw AuthorizationException when jwt not signed correctly
-        FileServiceJwt VerifyJwt(AuthJwt auth);
+        Task<FileServiceJwt> VerifyJwt(AuthJwt auth);
 
         // throw AuthorizationException when SharedSecret is not match or IP not in white list
-        void VerifyComm100Platform(AuthComm100Platform auth);
+        Task VerifyComm100Platform(AuthComm100Platform auth);
 
-        string GenerateToken(JwtPayloadDto jwtPayloadDto);
+        Task<string> GenerateToken(JwtPayloadDto jwtPayloadDto);
     }
 
     public class FileServiceJwt

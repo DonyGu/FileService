@@ -22,25 +22,25 @@ namespace Comm100.Framework.Exceptions
             {
                 json.code = 400;
                 json.message = context.Exception.Message;
-                context.Result = new BadRequestObjectResult(json);//返回异常数据
+                context.Result = new BadRequestObjectResult(json);
             }
             else if (context.Exception.GetType() == typeof(FileKeyNotFoundException))
             {
                 json.code = 404;
                 json.message = context.Exception.Message;
-                context.Result = new NotFoundObjectResult(json);//返回异常数据
+                context.Result = new NotFoundObjectResult(json);
             }
             else if (context.Exception.GetType() == typeof(UnauthorizedException))
             {
                 json.code = 401;
                 json.message = context.Exception.Message;
-                context.Result = new UnauthorizedObjectResult(json);//返回异常数据
+                context.Result = new UnauthorizedObjectResult(json);
             }
-            else if(context.Exception.GetType() == typeof(FileTooLargeException))
+            else if (context.Exception.GetType() == typeof(FileTooLargeException))
             {
                 json.code = 413;
                 json.message = context.Exception.Message;
-                context.Result = new PayloadTooLargeErrorObjectResult(json);//返回异常数据
+                context.Result = new PayloadTooLargeErrorObjectResult(json);
             }
             else
             {
@@ -50,7 +50,7 @@ namespace Comm100.Framework.Exceptions
             }
 
             //采用log4net 进行错误日志记录
-            LogHelper.ErrorLog(json.message, context.Exception);
+            LogHelper.Error(context.Exception, json.message);
 
         }
     }
@@ -60,7 +60,7 @@ namespace Comm100.Framework.Exceptions
         {
             StatusCode = StatusCodes.Status500InternalServerError;
         }
-        
+
     }
     public class PayloadTooLargeErrorObjectResult : ObjectResult
     {

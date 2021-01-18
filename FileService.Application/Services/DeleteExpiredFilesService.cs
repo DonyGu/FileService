@@ -30,11 +30,11 @@ namespace FileService.Application.Services
         {
             if (this._thread.Start())
             {
-                LogHelper.ErrorLog("DeleteExpiredFilesDomainService start.");
+                LogHelper.Info("DeleteExpiredFilesDomainService start.");
             }
             else
             {
-                LogHelper.ErrorLog("DeleteExpiredFilesDomainService  already started before.");
+                LogHelper.Info("DeleteExpiredFilesDomainService  already started before.");
             }
         }
     }

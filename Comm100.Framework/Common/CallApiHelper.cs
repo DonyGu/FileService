@@ -4,13 +4,14 @@ using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Comm100.Framework.Common
 {
     public class CallApiHelper
     {
         private static readonly int CallApiTimeOutSeconds = 60;
-        public static T CallApi<T>(out HttpStatusCode statusCode , string url, HttpMethod httpMethod, string token = "", string paraJson = "")
+        public static T CallApi<T>(out HttpStatusCode statusCode, string url, HttpMethod httpMethod, string token = "", string paraJson = "")
         {
             try
             {
@@ -45,6 +46,38 @@ namespace Comm100.Framework.Common
             catch (Exception exp)
             {
                 throw exp;
+            }
+        }
+        public async static Task<HttpStatusCode> UploadFile(string url, string token, string fileName, byte[] content, DTO.FileSyncDTO fileSyncDTO)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+                MultipartFormDataContent multipartFormData = new MultipartFormDataContent($"----WebKitFormBoundary{DateTime.Now.Ticks.ToString("x")}");
+                multipartFormData.Add(new ByteArrayContent(content), "file", fileName);
+
+                multipartFormData.Add(new StringContent(fileSyncDTO.siteId.ToString()), "siteId");
+                multipartFormData.Add(new StringContent(fileSyncDTO.creationTime.ToString()), "creationTime");
+                multipartFormData.Add(new StringContent(fileSyncDTO.expireTime.ToString()), "expireTime");
+
+
+                client.Timeout = TimeSpan.FromSeconds(90);
+                var res = await client.PostAsync(new Uri(url), multipartFormData);
+                var o = await res.Content.ReadAsStringAsync();
+                if (res.IsSuccessStatusCode)
+                {
+                    return res.StatusCode;
+                }
+                else if (res.StatusCode==HttpStatusCode.BadRequest && o== "{\"code\":400,\"message\":\"filekey already exisits.\"}")
+                {
+                    LogHelper.Error($"code : result : {o}, posturl: {url}");
+                    return HttpStatusCode.OK;
+                }
+                else
+                {
+                    LogHelper.Error($"code : {res.IsSuccessStatusCode}, result : {o}, posturl: {url}");
+                    throw new Exception(res.ReasonPhrase);
+                }
             }
         }
     }

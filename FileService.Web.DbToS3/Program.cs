@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Comm100.Framework.Configuration;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using NLog.Web;
 
 namespace FileService.Web.DbToS3
 {
@@ -14,19 +16,17 @@ namespace FileService.Web.DbToS3
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            CreateWebHostBuilder(args, null).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args, Action<IConfigurationBuilder> configure) =>
             WebHost.CreateDefaultBuilder(args)
             .ConfigureAppConfiguration((hostingContext, config) =>
             {
-                var env = hostingContext.HostingEnvironment;
-
-                var sharedFolder = Path.Combine(env.ContentRootPath, "..");
-                config
-                       .AddJsonFile(Path.Combine(sharedFolder, "appsettings.json"), optional: true);
+                config.AddSecretsManagerConfiguration();
+                configure?.Invoke(config);
             })
-                .UseStartup<Startup>();
+            .UseNLog()
+            .UseStartup<Startup>();
     }
 }

@@ -12,6 +12,11 @@ using System.Web;
 using Comm100.Framework.Common;
 using System.Linq;
 using System.Text.Encodings.Web;
+using Comm100.Framework.DTO;
+using System.Threading.Tasks;
+using System.Reflection;
+using Microsoft.AspNetCore.Server.Kestrel.Internal.System.Text.Encodings.Web.Utf8;
+using System.Text;
 
 namespace FileService.Web.Controllers
 {
@@ -29,9 +34,13 @@ namespace FileService.Web.Controllers
         }
 
         [HttpPost("")]
-        public ActionResult<string> Upload(IFormFile file)
+        public async Task<ActionResult<string>> Upload(IFormFile file)
         {
             var dto = new FileUploadDto();
+            if (file==null)
+            {
+                throw new Exception("File must not be empty.");
+            }
             dto.Name = file.FileName;
             dto.Content = StreamToBytes(file.OpenReadStream());
             dto.Auth = new AuthJwt
@@ -39,26 +48,31 @@ namespace FileService.Web.Controllers
                 IP = this.HttpContext.GetRemoteIPAddress().MapToIPv4().ToString(),
                 Jwt = this.Request.Headers["Authorization"].ToArray().FirstOrDefault(a => a.StartsWith("Bearer "))?.Replace("Bearer ", string.Empty),
             };
-            var fileDTO = this._fileAppService.Upload(dto);
+            var fileDTO = await this._fileAppService.Upload(dto);
             return Ok(fileDTO.FileKey);
         }
 
         [HttpPost("{fileKey}")]
-        public ActionResult Create(string fileKey,IFormFile file)
+        public async Task<ActionResult> Create(string fileKey, IFormFile file, [FromForm]int siteId, [FromForm]DateTime? CreationTime = null, [FromForm]DateTime? expireTime = null)
         {
             if (fileKey.Length != 172)
             {
                 throw new FileKeyNotFoundException();
             }
-            this._fileAppService.Create(new FileCreateDto()
+
+            LogHelper.Info($"sync request: {fileKey}");
+            await this._fileAppService.Create(new FileCreateDto()
             {
                 File = new FileDto
                 {
                     FileKey = fileKey,
                     Content = StreamToBytes(file.OpenReadStream()),
-                    Name = file.FileName
+                    Name = file.FileName,
+                    CreationTime = CreationTime ?? DateTime.UtcNow,
+                    ExpireTime = expireTime ?? DateTime.MaxValue,
+                    SiteId = siteId
                 },
-                Auth=new AuthComm100Platform
+                Auth = new AuthComm100Platform
                 {
                     SharedSecret = Request.Headers["Authorization"].ToArray().FirstOrDefault(a => a.StartsWith("Bearer "))?.Replace("Bearer ", string.Empty),
                     IP = this.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString(),
@@ -67,8 +81,9 @@ namespace FileService.Web.Controllers
             return Ok();
         }
 
+        [HttpHead("{fileKey}")]
         [HttpGet("{fileKey}")]
-        public ActionResult Get(string fileKey)
+        public async Task<ActionResult> Get(string fileKey)
         {
             // cases:
             // return file content
@@ -77,14 +92,14 @@ namespace FileService.Web.Controllers
             // file not found
             try
             {
-                var file = this._fileAppService.Get(fileKey);
+                var file = await this._fileAppService.Get(fileKey);
                 if (file.StorageType == StorageType.S3)
                 {
                     return new RedirectResult(file.Link);
                 }
                 System.Net.Mime.ContentDisposition cd = new System.Net.Mime.ContentDisposition
                 {
-                    FileName = HttpUtility.UrlEncode(file.Name),
+                    FileName = HttpUtility.UrlEncode(file.Name, Encoding.UTF8).Replace("+"," ").Replace("%2b","+"),
                     Inline = ContentTypeHelper.FileIsInline(file.Name)  // false = prompt the user for downloading;  true = browser to try to show the file inline
                 };
                 Response.Headers.Add("Content-Disposition", cd.ToString());
@@ -94,13 +109,13 @@ namespace FileService.Web.Controllers
             }
             catch (FileKeyNotFoundException ex)
             {
-                if (this._configService.GetBool("IsMainServer"))
+                if (await this._configService.GetBool("IsMainServer"))
                 {
                     throw ex;
                 }
                 else
                 {
-                    var url = this._configService.Get("MainServiceUrl");
+                    var url = await this._configService.Get("MainServiceUrl");
                     return new RedirectResult($"{url}/{fileKey}");
                     // redirect to main file service
                 }
@@ -108,25 +123,40 @@ namespace FileService.Web.Controllers
         }
 
         [HttpDelete("{fileKey}")]
-        public ActionResult Delete(string fileKey)
+        public async Task<ActionResult> Delete(string fileKey)
         {
             var dto = new FileDeleteDto()
             {
-                FileKey=fileKey,
-                Auth=new AuthComm100Platform
+                FileKey = fileKey,
+                Auth = new AuthComm100Platform
                 {
-                    SharedSecret = Request.Headers["Authorization"].ToArray().FirstOrDefault(a=>a.StartsWith("Bearer "))?.Replace("Bearer ", string.Empty),
+                    SharedSecret = Request.Headers["Authorization"].ToArray().FirstOrDefault(a => a.StartsWith("Bearer "))?.Replace("Bearer ", string.Empty),
                     IP = Request.HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString(),
                 }
-        };
-            this._fileAppService.Delete(dto);
+            };
+            await this._fileAppService.Delete(dto);
             return Ok();
         }
 
         [HttpGet("version")]
         public ActionResult Version()
         {
-            return Ok("File Service 001");
+            var fileAssembly = Assembly.GetEntryAssembly();
+            var version = fileAssembly.GetCustomAttribute<AssemblyFileVersionAttribute>().Version;
+            var lastWriteTime = System.IO.File.GetLastWriteTime(fileAssembly.Location);
+            return Ok($"File Service: { version ?? "unknow version"},{lastWriteTime}");
+        }
+
+        [HttpGet("monitor")]
+        public async Task<ActionResult<string>> Monitor(int count = 20)
+        {
+            var auth = new AuthJwt
+            {
+                IP = this.HttpContext.GetRemoteIPAddress().MapToIPv4().ToString(),
+                Jwt = this.Request.Headers["Authorization"].ToArray().FirstOrDefault(a => a.StartsWith("Bearer "))?.Replace("Bearer ", string.Empty),
+            };
+            var fileDTO = await this._fileAppService.Monitor(auth, count);
+            return Ok(fileDTO);
         }
 
         private byte[] StreamToBytes(System.IO.Stream s)

@@ -12,11 +12,11 @@ namespace Comm100.Framework.Domain.Repository
         Task<TEntity> Get(TId id);
         IReadOnlyList<TEntity> ListAll();
         IReadOnlyList<TEntity> List(ISpecification<TEntity> spec); 
-        int Count(ISpecification<TEntity> spec);
-        TEntity Create(TEntity entity);
+        Task<int> Count(ISpecification<TEntity> spec);
+        Task<TEntity> Create(TEntity entity);
         Task Update(TEntity entity);
         Task Delete(TEntity entity);
 
-        bool Exists(TId id);
+        Task<bool> Exists(TId id);
     }
 }

@@ -1,0 +1,52 @@
+﻿@model IEnumerable<Comm100.Framework.Config.Config>
+
+<h1>File Service Config</h1>
+<form action="/fileservice/config/list"  method="post">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    @Html.DisplayNameFor(model => model.Key)
+                </th>
+                <th>
+                    @Html.DisplayNameFor(model => model.Value)
+                </th>
+                <th>
+                    Operation
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    @if (item.Key == "IPWhiteList")
+                    { 
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Key)
+                        </td>
+                        <td>
+                            <input name="value" value="@item.Value" style="width:100%;border-color:#4a7de5" />
+                        </td>
+                        <td>
+                            <button type="submit">Update</button>
+                        </td>
+
+                    }
+                    else
+                    {
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Key)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Value)
+                        </td>
+                        <td></td>
+                    }
+
+                </tr>
+            }
+        </tbody>
+    </table>
+</form>
+

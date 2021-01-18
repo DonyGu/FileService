@@ -6,4 +6,5 @@ namespace FileService.Domain.Bo
         public string Name { get; set; }
         public byte[] Content { get; set; }
     }
+
 }

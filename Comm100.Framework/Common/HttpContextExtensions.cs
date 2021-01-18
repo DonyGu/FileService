@@ -13,7 +13,7 @@ namespace Comm100.Framework.Common
         {
             if (allowForwarded)
             {
-                string header = (context.Request.Headers["CF-Connecting-IP"].FirstOrDefault() ?? context.Request.Headers["X-Forwarded-For"].FirstOrDefault());
+                string header = context.Request.Headers["X-Forwarded-For"].FirstOrDefault();
                 if (IPAddress.TryParse(header, out IPAddress ip))
                 {
                     return ip;

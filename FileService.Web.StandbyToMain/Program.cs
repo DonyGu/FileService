@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Comm100.Framework.Configuration;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using NLog.Web;
 
 namespace FileService.Web.StandbyToMain
 {
@@ -14,11 +16,17 @@ namespace FileService.Web.StandbyToMain
     {
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            CreateWebHostBuilder(args, null).Build().Run();
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>();
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args, Action<IConfigurationBuilder> configure) =>
+           WebHost.CreateDefaultBuilder(args)
+           .ConfigureAppConfiguration((hostingContext, config) =>
+           {
+               config.AddSecretsManagerConfiguration();
+               configure?.Invoke(config);
+           })
+           .UseNLog()
+           .UseStartup<Startup>();
     }
 }

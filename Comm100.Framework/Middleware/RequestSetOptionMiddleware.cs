@@ -20,14 +20,14 @@ namespace Comm100.Framework.Middleware
 
         public async Task Invoke(HttpContext httpContext)
         {
-            LogHelper.WriteLog($"methord{httpContext.Request.Method}");
+            LogHelper.Error($"methord{httpContext.Request.Method}");
             foreach (var item in httpContext.Request.Headers)
             {
-                LogHelper.WriteLog(item.Key.ToString()+":"+item.Value.ToString());
+                LogHelper.Error(item.Key.ToString()+":"+item.Value.ToString());
             }
             if (httpContext.Request.Method!="GET" && httpContext.Request.Headers.TryGetValue("Origin", out StringValues origin))
             {
-                LogHelper.WriteLog($"origin{origin}");
+                LogHelper.Error($"origin{origin}");
                 httpContext.Response.Headers.Add("Access-Control-Allow-Origin", origin.ToString());
                 httpContext.Response.Headers.Add("Access-Control-Allow-Credentials", "true");
             }

@@ -7,4 +7,5 @@ namespace FileService.Application.Dto
         public FileDto File { get; set; }
         public AuthComm100Platform Auth { get; set; }
     }
+
 }

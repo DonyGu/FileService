@@ -1,4 +1,5 @@
-﻿using Comm100.Framework.Domain.Repository;
+﻿using Comm100.Framework.Common;
+using Comm100.Framework.Domain.Repository;
 using Comm100.Framework.Domain.Specifications;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -17,15 +18,15 @@ namespace Comm100.Framework.Infrastructure
         {
             _dbContext = dbContext;
         }
-        public int Count(ISpecification<TEntity> spec)
+        public async Task<int> Count(ISpecification<TEntity> spec)
         {
-            return ApplySpecification(spec).Count();
+            return await ApplySpecification(spec).CountAsync();
         }
 
-        public TEntity Create(TEntity entity)
+        public async Task<TEntity> Create(TEntity entity)
         {
-            _dbContext.Set<TEntity>().Add(entity);
-            _dbContext.SaveChanges();
+            await _dbContext.Set<TEntity>().AddAsync(entity);
+            await _dbContext.SaveChangesAsync();
             return entity;
         }
 
@@ -45,9 +46,9 @@ namespace Comm100.Framework.Infrastructure
              return await _dbContext.Set<TEntity>().FindAsync(id);
         }
 
-        public bool Exists(TId id)
+        public async Task<bool> Exists(TId id)
         {
-            return Get(id) != null;
+            return await Get(id) != null;
         }
 
         public IReadOnlyList<TEntity> ListAll()

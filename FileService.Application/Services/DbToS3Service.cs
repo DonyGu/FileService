@@ -12,36 +12,46 @@ using Comm100.Framework.Common;
 
 namespace FileService.Application.Services
 {
-    public class DbToS3Service : IDbToS3Service
+    public class DbToS3Service //: IDbToS3Service
     {
-        private readonly IDbToS3DomainService _dbToS3DomainService;
-        private readonly ThreadStartOnce _thread;
+        //private readonly IDbToS3DomainService _dbToS3DomainService;
+        //private readonly IDeleteExpiredFilesDomainService _deleteExpiredFilesDomainService;
+        //private readonly ThreadStartOnce _thread;
 
-        public DbToS3Service(IDbToS3DomainService dbToS3DomainService)
-        {
-            this._dbToS3DomainService = dbToS3DomainService;
-            this._thread = new ThreadStartOnce(new Thread(Run));
-        }
+        //public DbToS3Service(IDbToS3DomainService dbToS3DomainService, IDeleteExpiredFilesDomainService deleteExpiredFilesDomainService)
+        //{
+        //    this._dbToS3DomainService = dbToS3DomainService;
+        //    _deleteExpiredFilesDomainService = deleteExpiredFilesDomainService;
+        //    this._thread = new ThreadStartOnce(new Thread(Run));
+        //}
 
-        private void Run()
-        {
-            while (true)
-            {
-                this._dbToS3DomainService.MoveToS3();
-                Thread.Sleep(1000);
-            }
-        }
+        //private void Run()
+        //{
+        //    while (true)
+        //    {
+        //        try
+        //        {
+        //            this._dbToS3DomainService.MoveToS3().Wait();
+        //            this._deleteExpiredFilesDomainService.DeleteAnExpiredFile().Wait();
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            LogHelper.ErrorLog(ex.Message, ex);
+        //        }
+        //        Thread.Sleep(1000);
+        //    }
+        //}
 
-        public void Start()
-        {
-            if (this._thread.Start())
-            {
-                LogHelper.ErrorLog("DbToS3 start.");
-            }
-            else
-            {
-                LogHelper.ErrorLog("DbToS3 already started before.");
-            }
-        }
+        //public void Start()
+        //{
+        //    if (this._thread.Start())
+        //    {
+        //        LogHelper.ErrorLog("DbToS3 start.");
+        //    }
+        //    else
+        //    {
+        //        LogHelper.ErrorLog("DbToS3 already started before.");
+        //    }
+        //}
     }
 }

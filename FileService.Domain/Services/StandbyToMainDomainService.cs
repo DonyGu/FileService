@@ -3,8 +3,11 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Castle.MicroKernel.Lifestyle;
+using Castle.Windsor;
 using Comm100.Framework.Common;
 using Comm100.Framework.Config;
+using Comm100.Framework.DTO;
 using Comm100.Framework.SitePlatform;
 using FileService.Domain.Entities;
 using FileService.Domain.Interfaces;
@@ -16,64 +19,72 @@ namespace FileService.Domain.Services
     public class StandbyToMainDomainService : IStandbyToMainDomainService
     {
         IFileDomainService _fileDomainService;
-        ISitePlatformDomainService _sitePlatformDomainService;
         IConfigService _configService;
-        HttpClient _client = new HttpClient();
+        IWindsorContainer _container;
 
         public StandbyToMainDomainService(
             IFileDomainService fileDomainService,
-            ISitePlatformDomainService sitePlatformDomainService,
-            IConfigService configService)
+            IConfigService configService,
+            IWindsorContainer container)
         {
             this._fileDomainService = fileDomainService;
-            this._sitePlatformDomainService = sitePlatformDomainService;
             this._configService = configService;
+            this._container = container;
         }
 
-        public void MoveToMain()
+        public async Task MoveToMain()
         {
-            var count = _configService.GetInt("StandbyToMainWorkerNum");
+            var count = await _configService.GetInt("StandbyToMainWorkerNum");
+            var url = await this._configService.Get("MainServiceUrl");//this._sitePlatformDomainService.Get(file.SiteId).MainFileServiceUrl;
+            var sharedSecret = await this._configService.Get("SharedSecret");
             var spec = new FileFilterSpecification(StorageType.Db);
-            spec.ApplyPaging(1, 1);
+            spec.ApplyPaging(1, count);
+            spec.AddContentInclude();
             var files = this._fileDomainService.GetList(spec);
-            var tasks = files.Select((f) =>
-                Task.Run(() =>
-                {
-                    try
-                    {
-                        MoveFile(f);
-                        _fileDomainService.Delete(f.FileKey);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw ex;
-                    }
 
-                })).ToArray();
-            // wait until all finish
-            Task.WaitAll(tasks);
+            if (files.Count > 0)
+            {
+                var tasks = files.Select(async (f) =>
+                   await Task.Run(async () =>
+                    {
+                        LogHelper.Debug($"{DateTime.UtcNow} Begin Move: {f.FileKey}");
+                        await MoveFile(f, url, sharedSecret);
+                        LogHelper.Debug($"{DateTime.UtcNow} End Move: {f.FileKey}");
+                    })).ToArray();
+                // wait until all finish
+                await Task.WhenAll(tasks);
+            }
         }
 
-        private void MoveFile(File file)
+        public async Task MoveFile(File file, string url, string sharedSecret)
         {
-            var url = this._sitePlatformDomainService.Get(file.SiteId).MainFileServiceUrl;
-            var sharedSecret = this._configService.Get("SharedSecret");
-            var statusCode = HttpStatusCode.OK;
+            var callUrl = $"{url}/{file.FileKey}";
+            FileSyncDTO fileSyncDTO = new FileSyncDTO
+            {
+                creationTime = file.CreationTime.ToString(),
+                expireTime = file.ExpireTime.ToString(),
+                siteId = file.SiteId.ToString(),
+            };
             try
             {
-                CallApiHelper.CallApi<string>(out statusCode, url, HttpMethod.Post, sharedSecret, JsonConvert.SerializeObject(file));
+                LogHelper.Debug($"{DateTime.UtcNow} Begin call api: {file.FileKey}");
+                var httpstatusCode = await CallApiHelper.UploadFile(callUrl, sharedSecret, file.Content.Name, file.Content.Content, fileSyncDTO);
+                LogHelper.Debug($"{DateTime.UtcNow} End call api: {file.FileKey}");
+
+                if (httpstatusCode == HttpStatusCode.OK)
+                {
+                    using (_container.BeginScope())
+                    {
+                        LogHelper.Debug($"{DateTime.UtcNow} Begin delete: {file.FileKey}");
+                        IFileDomainService fileDomainService = _container.Resolve<IFileDomainService>();
+                        await fileDomainService.Delete(file);
+                        LogHelper.Debug($"{DateTime.UtcNow} End delete: {file.FileKey}");
+                    }
+                }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                if (statusCode == HttpStatusCode.BadRequest)
-                {
-
-                }
-                else
-                {
-                    throw;
-
-                }
+                LogHelper.Error(ex, ex.Message);
             }
         }
     }

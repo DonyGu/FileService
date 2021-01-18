@@ -12,6 +12,7 @@ namespace Comm100.Framework.Common
         // combination of values from Windows 7 Registry and 
         // from C:\Windows\System32\inetsrv\config\applicationHost.config
         // some added, including .7z and .dat
+        {".svg", "image/svg+xml"},
         {".323", "text/h323"},
         {".3g2", "video/3gpp2"},
         {".3gp", "video/3gpp"},
@@ -582,6 +583,7 @@ namespace Comm100.Framework.Common
                 case "image/jpeg":
                 case "image/png":
                 case "image/gif":
+                case "image/svg+xml":
                     return true;
                 default:
                     return false;

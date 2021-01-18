@@ -9,10 +9,6 @@ using Castle.Windsor;
 using Comm100.Framework.Common;
 using Comm100.Framework.Exceptions;
 using FileService.Infrastructure;
-using log4net;
-using log4net.Config;
-using log4net.Repository;
-// using Comm100.Web.Filters;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -20,6 +16,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -29,13 +26,9 @@ namespace FileService.Web.DbToS3
     public class Startup
     {
         private static readonly WindsorContainer Container = new WindsorContainer();
-        public static ILoggerRepository loggerRepository { get; set; }
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            loggerRepository = LogManager.CreateRepository("NETCoreRepository");
-            XmlConfigurator.ConfigureAndWatch(loggerRepository, new FileInfo("log4net.config"));
-            InitRepository.LoggerRepository = loggerRepository;
         }
 
         public IConfiguration Configuration { get; }
@@ -44,7 +37,6 @@ namespace FileService.Web.DbToS3
         public IServiceProvider ConfigureServices(IServiceCollection services)
         {
             Container.AddFacility<AspNetCoreFacility>(f => f.CrossWiresInto(services));
-            Container.Register(Component.For<IWindsorContainer>().Instance(Container));
             services.AddMvc(options =>
             {
                 options.EnableEndpointRouting = false;
@@ -52,7 +44,9 @@ namespace FileService.Web.DbToS3
             }).SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
 
             RegisterApplicationComponents(services);
-           // services.AddDbContext<DbContext, FileDbContext>();
+            services.AddSingleton<IWindsorContainer>(Container);
+            services.AddHostedService<DbToS3Worker>();
+            //services.AddHostedService<DeletedExpiredFilesWorker>();
             return services.AddWindsor(Container,
                 opts => opts.UseEntryAssembly(this.GetType().Assembly));
         }
@@ -60,6 +54,12 @@ namespace FileService.Web.DbToS3
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.Use((context, next) => {
+                context.Request.PathBase = "/fileservicedbtos3";
+                return next();
+            });
+
+            app.UsePathBase("/fileservicedbtos3");
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -72,6 +72,7 @@ namespace FileService.Web.DbToS3
             // Application components
             Container.Register(Component.For<IHttpContextAccessor>().ImplementedBy<HttpContextAccessor>());
             //Container.Register(Component.For<IWindsorContainer>().Instance(Container));
+            Container.Register(Component.For<DbContext>().ImplementedBy<FileDbContext>().LifestyleScoped());
             Container.Register(Component.For<IConfiguration>().Instance(Configuration));
             Container.Install(new IocInstaller());
         }

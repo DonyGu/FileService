@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
 using System;
 using System.Net;
-using System.Web.Http.Results;
 
 namespace Comm100.Framework.Exceptions
 {

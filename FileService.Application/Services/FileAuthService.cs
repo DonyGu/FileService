@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using FileService.Application.Dto;
 using FileService.Application.Interfaces;
 using Comm100.Framework.Config;
@@ -15,6 +15,8 @@ using System.Security.Cryptography;
 using System.Linq;
 using Comm100.Framework.Exceptions;
 using Comm100.Framework.Common;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace FileService.Application.Services
 {
@@ -29,14 +31,14 @@ namespace FileService.Application.Services
             this._jwtCertificateService = jwtCertificateService;
         }
 
-        public FileServiceJwt VerifyJwt(AuthJwt auth)
+        public async Task<FileServiceJwt> VerifyJwt(AuthJwt auth)
         {
             try
             {
                 // check signature
-                var publicKey = this._configService.Get("JWTPublicKeys");
-                var cer = new X509Certificate2(Convert.FromBase64String(publicKey));
-                var rsa = (RSA)(cer.PublicKey.Key);
+                var publicKey = await this._configService.Get("JWTPublicKeys");
+                //var cer = new X509Certificate2(Convert.FromBase64String(publicKey));
+                var rsa = CertificateHelper.GetPublicKey(auth.Jwt, publicKey);//  (RSA)(cer.PublicKey.Key);
                 var validationParameters = new TokenValidationParameters
                 {
                     ValidateAudience = false,
@@ -53,10 +55,14 @@ namespace FileService.Application.Services
                 {
                     scope = JsonConvert.DeserializeObject<ScopeDto>(scopeStr);
                 }
-                if (scope.ip != auth.IP)
+                //LogHelper.Info($"Check ip: JWT->{scope.ip}, FileService->{auth.IP}");
+                //此处ip校验，在对部分域名使用vpn加速情况下，可能造成ip不一致，所以暂时去掉
+                /*
+                if (scope.ip != auth.IP && scope.ip != "127.0.0.1")
                 {
                     throw new UnauthorizedException();
                 }
+                */
                 VerifyJti(jti);
                 return new FileServiceJwt()
                 {
@@ -67,7 +73,7 @@ namespace FileService.Application.Services
             }
             catch (Exception ex)
             {
-                LogHelper.ErrorLog(ex.Message, ex);
+                LogHelper.Error(ex, ex.Message);
                 throw new UnauthorizedException();
             }
 
@@ -83,48 +89,50 @@ namespace FileService.Application.Services
                     return;
                 }
             }
-            throw new FileNotAllowedException();
+            throw new UnauthorizedException();
         }
 
-        public string GenerateToken(JwtPayloadDto jwtPayloadDto)
+        public async Task<string> GenerateToken(JwtPayloadDto jwtPayloadDto)
         {
+            var rsaWithThumbprint = await _jwtCertificateService.GetPrivateKey();
+
             var claims = new List<Claim>
             {
                 new Claim("scope",JsonConvert.SerializeObject(jwtPayloadDto.scope)),
-                new Claim("jti",Guid.NewGuid().ToString())
+                new Claim("jti",Guid.NewGuid().ToString()),
+                new Claim(JwtTokenConstants.Thumbprint, rsaWithThumbprint.Thumbprint),
             };
             var iss = jwtPayloadDto.iss;
             var aud = "FileService";
             var iat = DateTime.UtcNow;
             var exp = iat.AddMinutes(10);
-            var rsa = _jwtCertificateService.GetPrivateKey();
-            var key = new RsaSecurityKey(rsa.ExportParameters(true));
+            var key = new RsaSecurityKey(rsaWithThumbprint.Rsa.ExportParameters(true));
             var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256Signature);
             var payload = new JwtPayload(iss, aud, claims, null, exp, iat);
             var token = new JwtSecurityToken(new JwtHeader(creds), payload);
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public void VerifyComm100Platform(AuthComm100Platform auth)
+        public async Task VerifyComm100Platform(AuthComm100Platform auth)
         {
-            VerifySharedSecret(auth.SharedSecret);
-            VerifyIP(auth.IP);
+            await VerifySharedSecret(auth.SharedSecret);
+            await VerifyIP(auth.IP);
         }
 
-        private void VerifySharedSecret(string clientSharedSecret)
+        private async Task VerifySharedSecret(string clientSharedSecret)
         {
-            var sharedSecret = _configService.Get("SharedSecret");
+            var sharedSecret = await _configService.Get("SharedSecret");
             if (clientSharedSecret != sharedSecret)
             {
                 throw new UnauthorizedException();
             }
         }
 
-        private void VerifyIP(string ip)
+        private async Task VerifyIP(string ip)
         {
-            var whiteList = _configService.GetJson<IPRange[]>("IPWhiteList");
+            var whiteList = await _configService.GetJson<IPRange[]>("IPWhiteList");
             var ifValid = false;
-            LogHelper.WriteLog($"ip:{ip},list:{string.Join(";",whiteList.Select(i=>$"{i.From}->{i.To}"))}");
+            LogHelper.Info($"ip:{ip},list:{string.Join(";", whiteList.Select(i => $"{i.From}->{i.To}"))}");
 
             foreach (var item in whiteList)
             {
@@ -161,14 +169,15 @@ namespace FileService.Application.Services
             return (long)num;
         }
 
-        public void VerifFile(string appId, string name, byte[] content)
+        public async Task VerifFile(string appId, string name, byte[] content)
         {
-            var fileBlackList = this._configService.GetJson<string[]>("FileBlackList");
+            var fileBlackList = await this._configService.GetJson<string[]>("FileBlackList");
             if (FileHelper.CheckFileNameLegitimacy(name, content, fileBlackList) == false)
             {
                 throw new FileNotAllowedException();
             }
 
         }
+
     }
 }

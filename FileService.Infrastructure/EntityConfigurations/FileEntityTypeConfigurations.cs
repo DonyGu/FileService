@@ -10,6 +10,7 @@ namespace FileService.Infrastructure.EntityConfigurations
         {
             builder.ToTable("t_fileService_file");
             builder.HasKey(a => a.FileKey);
+            builder.Property(a => a.FileKey).HasColumnType("varchar(172)").IsFixedLength();
         }
     }
 }

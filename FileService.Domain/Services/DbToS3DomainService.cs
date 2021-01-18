@@ -15,48 +15,51 @@ namespace FileService.Domain.Services
 {
     public class DbToS3DomainService : IDbToS3DomainService
     {
-        IConfigService _configService;
         IFileDomainService _fileDomainService;
         IWindsorContainer _container;
 
         public DbToS3DomainService(
-            IConfigService configService,
             IFileDomainService fileDomainService,
             IWindsorContainer container)
         {
-            this._configService = configService;
             this._fileDomainService = fileDomainService;
             this._container = container;
         }
 
-        public void MoveToS3()
+        public async Task MoveToS3(int count)
         {
-            var count = this._configService.GetInt("DbToS3WorkerNum");
-            var spec = new FileFilterSpecification(StorageType.Db);
-            spec.ApplyPaging(1, count);
-            spec.AddContentInclude();
-            var files = this._fileDomainService.GetList(spec);
+            //var spec = new FileFilterSpecification(StorageType.Db);
+            //spec.ApplyPaging(1, count);
+            //spec.AddContentInclude();
+            var files = this._fileDomainService.GetTopInDb(count);
+            LogHelper.Debug($"task begin: {DateTime.UtcNow}");
             var tasks = files.Select((f) =>
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
-                    try
+                    using (_container.BeginScope())
                     {
-                        if (f.ExpireTime <= DateTime.UtcNow)
+                        try
                         {
-                            this._fileDomainService.Delete(f.FileKey);
-                            return;
+                            LogHelper.Debug($"move file: {DateTime.UtcNow} ({f.FileKey})");
+                            var fileDomainService = _container.Resolve<IFileDomainService>();
+                            if (f.ExpireTime <= DateTime.UtcNow)
+                            {
+                                await fileDomainService.Delete(f);
+                                return;
+                            }
+                            await fileDomainService.MoveToRemote(f);
                         }
-                        this._fileDomainService.MoveToRemote(f);
-                    }
-                    catch (Exception ex)
-                    {
-                        LogHelper.ErrorLog(ex.Message, ex);
+                        catch (Exception ex)
+                        {
+                            LogHelper.Error(ex,ex.Message);
+                        }
                     }
 
                 })).ToArray();
-
             // wait until all finish
             Task.WaitAll(tasks);
+            LogHelper.Debug($"task end: {DateTime.UtcNow}");
+
         }
 
     }

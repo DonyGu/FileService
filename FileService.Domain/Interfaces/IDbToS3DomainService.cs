@@ -6,6 +6,6 @@ namespace FileService.Domain.Interfaces
 {
     public interface IDbToS3DomainService
     {
-        void MoveToS3();
+        Task MoveToS3(int count);
     }
 }

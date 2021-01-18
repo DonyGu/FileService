@@ -12,6 +12,8 @@ using FileService.Application.Interfaces;
 using System.Security.Cryptography;
 using System.Linq;
 using Comm100.Framework.Exceptions;
+using System.Threading.Tasks;
+using Comm100.Framework.Security;
 
 namespace FileService.Application.Services
 {
@@ -30,38 +32,53 @@ namespace FileService.Application.Services
             this._fileLimitDomainService = fileLimitDomainService;
         }
 
-        public FileDto Upload(FileUploadDto dto)
+        public async Task<FileDto> Upload(FileUploadDto dto)
         {
-            var jwtResult = this._fileAuthService.VerifyJwt(dto.Auth);
-            this._fileLimitDomainService.Check(new CheckFileLimitBo() { AppId = jwtResult.AppId, Name = dto.Name, Content = dto.Content });
+            var jwtResult = await this._fileAuthService.VerifyJwt(dto.Auth);
+            await this._fileLimitDomainService.Check(new CheckFileLimitBo() { AppId = jwtResult.AppId, Name = dto.Name, Content = dto.Content });
             var file = FileMapping(dto, jwtResult);
-            var result = this._fileDomainService.Create(file);
+            var result = await this._fileDomainService.Create(file);
             return FileDtoMapping(result);
         }
 
-        public FileDto Create(FileCreateDto dto)
+        public async Task<FileDto> Create(FileCreateDto dto)
         {
-            this._fileAuthService.VerifyComm100Platform(dto.Auth);
-            if (_fileDomainService.Exist(dto.File.FileKey))
+            await this._fileAuthService.VerifyComm100Platform(dto.Auth);
+            bool ifExists = await _fileDomainService.Exist(dto.File.FileKey);
+            if (ifExists)
             {
                 throw new FileKeyExistsException();
             }
             var file = FileMapping(dto);
-            var result = this._fileDomainService.Create(file);
+            var result = await this._fileDomainService.Create(file);
             return FileDtoMapping(result);
         }
 
-        public FileDto Get(string fileKey)
+        public async Task<FileDto> Get(string fileKey)
         {
-            var result = this._fileDomainService.Get(fileKey);
+            var result = await this._fileDomainService.Get(fileKey);
             return FileDtoMapping(result);
         }
 
-        public void Delete(FileDeleteDto dto)
+        public async Task Delete(FileDeleteDto dto)
         {
-            this._fileAuthService.VerifyComm100Platform(dto.Auth);
+            await this._fileAuthService.VerifyComm100Platform(dto.Auth);
 
-            this._fileDomainService.Delete(dto.FileKey);
+            await this._fileDomainService.Delete(dto.FileKey);
+        }
+
+        public async Task<List<FileDto>> Monitor(AuthJwt authJwt, int count)
+        {
+            var jwtResult = await this._fileAuthService.VerifyJwt(authJwt);
+            List<FileDto> result = new List<FileDto>();
+            var spec = new FileFilterSpecification(StorageType.Db);
+            spec.ApplyPaging(1, count);
+            var list = this._fileDomainService.GetList(spec);
+            foreach (var item in list)
+            {
+                result.Add(new FileDto { FileKey = item.FileKey, SiteId = item.SiteId, CreationTime = item.CreationTime, ExpireTime = item.ExpireTime });
+            }
+            return result;
         }
 
         private File FileMapping(FileCreateDto dto)

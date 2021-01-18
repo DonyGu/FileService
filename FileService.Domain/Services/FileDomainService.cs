@@ -13,17 +13,19 @@ using Comm100.Framework.Config;
 using Comm100.Framework.Exceptions;
 using Comm100.Framework.Domain.Repository;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
+using Comm100.Framework.Common;
 
 namespace FileService.Domain.Services
 {
     public class FileDomainService : IFileDomainService
     {
-        private readonly IRepository<string, File> _repository;
+        private readonly IFileRepository _repository;
         private readonly IRepository<byte[], FileContent> _fileContentRepository;
         private readonly IS3Repository _s3Repository;
         private readonly IConfigService _configService;
 
-        public FileDomainService(IRepository<string, File> repository, IS3Repository s3Repository
+        public FileDomainService(IFileRepository repository, IS3Repository s3Repository
             , IRepository<byte[], FileContent> fileContentRepository, IConfigService configService)
         {
             this._repository = repository;
@@ -33,31 +35,31 @@ namespace FileService.Domain.Services
             ;
         }
 
-        public File Create(File bo)
+        public async Task<File> Create(File bo)
         {
-            if (_fileContentRepository.Exists(bo.Checksum))
+            if (await _fileContentRepository.Exists(bo.Checksum))
             {
                 bo.Content = null;
             }
-            return this._repository.Create(bo);
+            return await this._repository.Create(bo);
         }
 
-        public File Get(string fileKey)
+        public async Task<File> Get(string fileKey)
         {
-            var file = this._repository.Get(fileKey).Result;
+            var file = await this._repository.Get(fileKey);
             if (file == null)
             {
                 throw new FileKeyNotFoundException();
             }
-            file.Content = this._fileContentRepository.Get((file.Checksum)).Result;
+            file.Content = await this._fileContentRepository.Get((file.Checksum));
             // check expire, delete expire record and throw new FileKeyNotFoundException
-            DeleteOneExpiredFile(file);
+            await DeleteOneExpiredFile(file);
             return file;
         }
 
-        public bool Exist(string fileKey)
+        public async Task<bool> Exist(string fileKey)
         {
-            return this._repository.Exists(fileKey);
+            return await this._repository.Exists(fileKey);
         }
 
         public IReadOnlyList<File> GetList(FileFilterSpecification spec)
@@ -65,57 +67,76 @@ namespace FileService.Domain.Services
             return _repository.List(spec);
         }
 
-        public void MoveToRemote(File file)
+        public async Task MoveToRemote(File file)
         {
-            var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
+            var s3Setting = await this._configService.GetJson<S3SettingsBo>("S3Settings");
             var s3FileBo = S3FileBoMapping(file, s3Setting);
-            this._s3Repository.Put(s3Setting, s3FileBo);
+
+            LogHelper.Debug($"begin post: {DateTime.UtcNow}({file.FileKey})");
+            await this._s3Repository.Put(s3Setting, s3FileBo);
+            LogHelper.Debug($"end post: {DateTime.UtcNow}({file.FileKey})");
             file.Content.StorageType = StorageType.S3;
             file.Content.Link = s3FileBo.Link;
-            //file.Content.Content = null;
-            this._repository.Update(file);
+            file.Content.Content = null;
+            await this._fileContentRepository.Update(file.Content);
         }
 
-        public void Delete(string fileKey)
+        public async Task Delete(File file)
         {
-            var file = this._repository.Get(fileKey).Result;
-            var fileContent = this._fileContentRepository.Get((file.Checksum)).Result;
-            this._repository.Delete(file);
-            if (CountContentFiles(fileContent.Checksum)==0)
+            await this._repository.Delete(file);
+            var count = await CountContentFiles(file.Checksum);
+            if (count == 0)
             {
+                var fileContent = file.Content;
                 if (fileContent.StorageType == StorageType.S3)
                 {
-                    var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
-                    this._s3Repository.Delete(s3Setting, fileContent.Link);
+                    var s3Setting = await this._configService.GetJson<S3SettingsBo>("S3Settings");
+                    await this._s3Repository.Delete(s3Setting, fileContent.Link);
                 }
-                this._fileContentRepository.Delete(fileContent);
+                await this._fileContentRepository.Delete(fileContent);
             }
-         
+        }
+        public async Task Delete(string fileKey)
+        {
+
+            var file = await this._repository.Get(fileKey);
+            await this._repository.Delete(file);
+            var count = await CountContentFiles(file.Checksum);
+            if (count == 0)
+            {
+                var fileContent = await this._fileContentRepository.Get(file.Checksum);
+                if (fileContent.StorageType == StorageType.S3)
+                {
+                    var s3Setting = await this._configService.GetJson<S3SettingsBo>("S3Settings");
+                    await this._s3Repository.Delete(s3Setting, fileContent.Link);
+                }
+                await this._fileContentRepository.Delete(fileContent);
+            }
         }
 
-        public void DeleteOneExpiredFile(File file)
+        public async Task DeleteOneExpiredFile(File file)
         {
             var fileContent = file.Content;
             if (file.ExpireTime < DateTime.UtcNow)
             {
-                _repository.Delete(file);
-                
-                if (CountContentFiles(fileContent.Checksum) == 0)
+                await _repository.Delete(file);
+                var count = await CountContentFiles(fileContent.Checksum);
+                if (count == 0)
                 {
                     if (fileContent.StorageType == StorageType.S3)
                     {
-                        var s3Setting = this._configService.GetJson<S3SettingsBo>("S3Settings");
-                        this._s3Repository.Delete(s3Setting, fileContent.Link);
+                        var s3Setting = await this._configService.GetJson<S3SettingsBo>("S3Settings");
+                        await this._s3Repository.Delete(s3Setting, fileContent.Link);
                     }
-                    this._fileContentRepository.Delete(fileContent);
+                    await this._fileContentRepository.Delete(fileContent);
                 }
                 throw new FileKeyNotFoundException();
             }
         }
 
-        public int CountContentFiles(byte[] checksum)
+        public async Task<int> CountContentFiles(byte[] checksum)
         {
-            return _repository.Count(new FileFilterSpecification(checksum));
+            return await _repository.Count(new FileFilterSpecification(checksum));
         }
 
 
@@ -129,5 +150,9 @@ namespace FileService.Domain.Services
             };
         }
 
+        public IEnumerable<File> GetTopInDb(int count)
+        {
+            return _repository.GetTopInDb(count);
+        }
     }
 }

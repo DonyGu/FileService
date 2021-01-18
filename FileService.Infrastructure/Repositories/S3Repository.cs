@@ -58,7 +58,11 @@ namespace FileService.Infrastructure.Repositories
                 };
                 request.Headers.ContentDisposition = cd.ToString();
                 request.Headers.CacheControl = "max-age=31536000";
-                await client.PutObjectAsync(request);
+                var result =  await client.PutObjectAsync(request);
+                if(result.HttpStatusCode!= System.Net.HttpStatusCode.OK)
+                {
+                    throw new Exception($"An error occurred with the code '{result.HttpStatusCode}' when writing an object");
+                }
             }
             catch (AmazonS3Exception amazonS3Exception)
             {
